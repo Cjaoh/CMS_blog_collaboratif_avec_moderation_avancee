@@ -1,0 +1,55 @@
+<div class="login-container">
+  <mat-card class="login-card">
+    <mat-card-header>
+      <mat-card-title>Connexion</mat-card-title>
+      <mat-card-subtitle>Accédez à votre espace CMS</mat-card-subtitle>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Email</mat-label>
+          <input matInput type="email" formControlName="email" placeholder="votre@email.com" required>
+          <mat-icon matSuffix>email</mat-icon>
+          <mat-error *ngIf="loginForm.get('email')?.hasError('required')">
+            L'email est requis
+          </mat-error>
+          <mat-error *ngIf="loginForm.get('email')?.hasError('email')">
+            Veuillez entrer un email valide
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Mot de passe</mat-label>
+          <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password" required>
+          <button type="button" mat-icon-button matSuffix (click)="hidePassword = !hidePassword">
+            <mat-icon>{{ hidePassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+          <mat-error *ngIf="loginForm.get('password')?.hasError('required')">
+            Le mot de passe est requis
+          </mat-error>
+        </mat-form-field>
+
+        <div class="form-actions">
+          <button mat-raised-button color="primary" type="submit" [disabled]="!loginForm.valid || isLoading">
+            <mat-icon *ngIf="!isLoading">login</mat-icon>
+            <mat-progress-spinner *ngIf="isLoading" diameter="20"></mat-progress-spinner>
+            {{ isLoading ? 'Connexion...' : 'Se connecter' }}
+          </button>
+        </div>
+      </form>
+
+      <div class="error-message" *ngIf="errorMessage">
+        <mat-icon class="error-icon">error</mat-icon>
+        {{ errorMessage }}
+      </div>
+    </mat-card-content>
+
+    <mat-card-actions>
+      <div class="register-link">
+        <span>Pas encore de compte ?</span>
+        <a mat-button color="accent" routerLink="/register">S'inscrire</a>
+      </div>
+    </mat-card-actions>
+  </mat-card>
+</div>

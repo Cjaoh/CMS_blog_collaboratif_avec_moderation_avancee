@@ -1,0 +1,93 @@
+<div class="article-detail-container" *ngIf="article; else loading">
+  <mat-card class="article-card">
+    <mat-card-header>
+      <div mat-card-avatar>
+        <img [src]="article.author.avatar || 'assets/default-avatar.png'" [alt]="article.author.firstName">
+      </div>
+      <mat-card-title>{{ article.title }}</mat-card-title>
+      <mat-card-subtitle>
+        {{ article.author.firstName }} {{ article.author.lastName }} | 
+        {{ article.publishedAt | date:'dd MMMM yyyy' }}
+      </mat-card-subtitle>
+    </mat-card-header>
+    
+    <img mat-card-image [src]="article.featuredImage || 'assets/default-article.jpg'" [alt]="article.title">
+    
+    <mat-card-content>
+      <div class="article-content">
+        <p class="excerpt">{{ article.excerpt }}</p>
+        <div class="content" [innerHTML]="article.content"></div>
+      </div>
+      
+      <div class="tags" *ngIf="article.tags.length > 0">
+        <mat-chip *ngFor="let tag of article.tags">{{ tag }}</mat-chip>
+      </div>
+    </mat-card-content>
+    
+    <mat-card-actions>
+      <div class="article-stats">
+        <span><mat-icon>visibility</mat-icon> {{ article.viewsCount }}</span>
+        <span><mat-icon>favorite</mat-icon> {{ article.likesCount }}</span>
+        <span><mat-icon>comment</mat-icon> {{ article.commentsCount }}</span>
+      </div>
+      
+      <div class="article-actions">
+        <button mat-icon-button (click)="likeArticle()">
+          <mat-icon>favorite_border</mat-icon>
+        </button>
+        <button mat-icon-button (click)="shareArticle()">
+          <mat-icon>share</mat-icon>
+        </button>
+      </div>
+    </mat-card-actions>
+  </mat-card>
+
+  <!-- Section commentaires -->
+  <mat-card class="comments-section" *ngIf="authService.isAuthenticated">
+    <mat-card-header>
+      <mat-card-title>Commentaires</mat-card-title>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <!-- Formulaire d'ajout de commentaire -->
+      <div class="add-comment">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Ajouter un commentaire</mat-label>
+          <textarea matInput rows="3" [(ngModel)]="newComment" placeholder="Votre commentaire..."></textarea>
+        </mat-form-field>
+        <button mat-raised-button color="primary" (click)="addComment()">
+          <mat-icon>send</mat-icon>
+          Publier
+        </button>
+      </div>
+      
+      <!-- Liste des commentaires -->
+      <div class="comments-list" *ngIf="comments.length > 0; else noComments">
+        <div class="comment" *ngFor="let comment of comments">
+          <div class="comment-header">
+            <img [src]="comment.author.avatar || 'assets/default-avatar.png'" [alt]="comment.author.firstName" class="comment-avatar">
+            <div class="comment-meta">
+              <strong>{{ comment.author.firstName }} {{ comment.author.lastName }}</strong>
+              <span>{{ comment.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+          </div>
+          <div class="comment-content">{{ comment.content }}</div>
+        </div>
+      </div>
+      
+      <ng-template #noComments>
+        <div class="no-comments">
+          <mat-icon class="large-icon">comment</mat-icon>
+          <p>Soyez le premier à commenter !</p>
+        </div>
+      </ng-template>
+    </mat-card-content>
+  </mat-card>
+</div>
+
+<ng-template #loading>
+  <div class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Chargement de l'article...</p>
+  </div>
+</ng-template>

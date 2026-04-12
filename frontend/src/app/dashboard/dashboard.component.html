@@ -1,0 +1,206 @@
+<div class="dashboard-container">
+  <!-- Header avec profil utilisateur -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <div class="welcome-section">
+        <h1 class="welcome-title">
+          <span class="greeting">Bonjour</span>
+          <span class="user-name">{{ currentUser?.firstName }}!</span>
+        </h1>
+        <p class="welcome-subtitle">
+          Bienvenue dans votre espace culinaire personnel
+        </p>
+      </div>
+      
+      <div class="user-profile">
+        <div class="profile-info">
+          <div class="user-avatar">
+            <mat-icon>person</mat-icon>
+          </div>
+          <div class="user-details">
+            <div class="user-full-name">{{ currentUser?.firstName }} {{ currentUser?.lastName }}</div>
+            <div class="user-role">{{ currentUser?.role }}</div>
+          </div>
+        </div>
+        
+        <button mat-icon-button (click)="logout()" class="logout-btn">
+          <mat-icon>logout</mat-icon>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Contenu principal -->
+  <main class="dashboard-main" *ngIf="!isLoading; else loadingTemplate">
+    <!-- Actions rapides -->
+    <section class="quick-actions">
+      <h2 class="section-title">Actions rapides</h2>
+      <div class="actions-grid">
+        <button mat-raised-button color="primary" (click)="createNewArticle()" class="action-card">
+          <mat-icon class="action-icon">add_circle</mat-icon>
+          <span class="action-title">Nouvelle recette</span>
+          <span class="action-subtitle">Partagez une nouvelle création</span>
+        </button>
+        
+        <button mat-stroked-button (click)="viewAllArticles()" class="action-card">
+          <mat-icon class="action-icon">menu_book</mat-icon>
+          <span class="action-title">Toutes les recettes</span>
+          <span class="action-subtitle">Explorez la collection</span>
+        </button>
+        
+        <button mat-stroked-button class="action-card" *ngIf="isAdmin">
+          <mat-icon class="action-icon">people</mat-icon>
+          <span class="action-title">Gérer les membres</span>
+          <span class="action-subtitle">Administration</span>
+        </button>
+        
+        <button mat-stroked-button class="action-card">
+          <mat-icon class="action-icon">trending_up</mat-icon>
+          <span class="action-title">Statistiques</span>
+          <span class="action-subtitle">Vos performances</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Statistiques -->
+    <section class="stats-section">
+      <h2 class="section-title">Vos statistiques</h2>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon-container">
+            <mat-icon class="stat-icon">article</mat-icon>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number">{{ stats.totalArticles }}</div>
+            <div class="stat-label">Recettes publiées</div>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon-container">
+            <mat-icon class="stat-icon">visibility</mat-icon>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number">{{ stats.totalViews }}</div>
+            <div class="stat-label">Vues totales</div>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon-container">
+            <mat-icon class="stat-icon">favorite</mat-icon>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number">{{ stats.totalLikes }}</div>
+            <div class="stat-label">Likes reçus</div>
+          </div>
+        </div>
+        
+        <div class="stat-card">
+          <div class="stat-icon-container">
+            <mat-icon class="stat-icon">chat</mat-icon>
+          </div>
+          <div class="stat-content">
+            <div class="stat-number">{{ stats.totalComments }}</div>
+            <div class="stat-label">Commentaires</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="content-grid">
+      <!-- Articles récents -->
+      <section class="recent-articles">
+        <div class="section-header">
+          <h2 class="section-title">Vos recettes récentes</h2>
+          <button mat-stroked-button (click)="viewAllArticles()">
+            Voir tout
+            <mat-icon>arrow_forward</mat-icon>
+          </button>
+        </div>
+        
+        <div class="articles-list">
+          <div class="article-card" 
+               *ngFor="let article of recentArticles" 
+               (click)="viewArticle(article._id)">
+            <div class="article-image">
+              <img [src]="article.featuredImage || '/assets/default-recipe.jpg'" 
+                   [alt]="article.title">
+              <div class="article-status" [class]="article.status">
+                {{ article.status }}
+              </div>
+            </div>
+            
+            <div class="article-content">
+              <h3 class="article-title">{{ article.title }}</h3>
+              <p class="article-excerpt">{{ article.excerpt }}</p>
+              
+              <div class="article-meta">
+                <div class="meta-item">
+                  <mat-icon class="meta-icon">visibility</mat-icon>
+                  <span>{{ article.viewsCount }}</span>
+                </div>
+                <div class="meta-item">
+                  <mat-icon class="meta-icon">favorite</mat-icon>
+                  <span>{{ article.likesCount }}</span>
+                </div>
+                <div class="meta-item">
+                  <mat-icon class="meta-icon">chat</mat-icon>
+                  <span>{{ article.commentsCount }}</span>
+                </div>
+              </div>
+              
+              <div class="article-tags">
+                <mat-chip class="tag-chip" *ngFor="let tag of article.tags.slice(0, 3)">
+                  {{ tag }}
+                </mat-chip>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="empty-state" *ngIf="recentArticles.length === 0">
+          <mat-icon class="empty-icon">restaurant_menu</mat-icon>
+          <h3>Aucune recette publiée</h3>
+          <p>Commencez par partager votre première recette!</p>
+          <button mat-raised-button color="primary" (click)="createNewArticle()">
+            <mat-icon>add</mat-icon>
+            Créer une recette
+          </button>
+        </div>
+      </section>
+
+      <!-- Catégories populaires -->
+      <section class="popular-categories">
+        <div class="section-header">
+          <h2 class="section-title">Catégories populaires</h2>
+        </div>
+        
+        <div class="categories-grid">
+          <div class="category-card" 
+               *ngFor="let category of popularCategories" 
+               (click)="viewCategory(category._id)">
+            <div class="category-icon">
+              <mat-icon>restaurant</mat-icon>
+            </div>
+            <div class="category-info">
+              <h3 class="category-name">{{ category.name }}</h3>
+              <div class="category-count">{{ category.articlesCount }} recettes</div>
+            </div>
+            <div class="category-arrow">
+              <mat-icon>arrow_forward_ios</mat-icon>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Template de chargement -->
+  <ng-template #loadingTemplate>
+    <div class="loading-container">
+      <mat-progress-spinner mode="indeterminate" diameter="60"></mat-progress-spinner>
+      <p>Chargement de votre espace...</p>
+    </div>
+  </ng-template>
+</div>

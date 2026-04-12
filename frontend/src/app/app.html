@@ -1,0 +1,32 @@
+<!-- Navigation simple et fonctionnelle -->
+<header class="simple-header">
+  <div class="header-content">
+    <div class="logo">
+      <h1>🍳 Blog Recettes</h1>
+    </div>
+    
+    <nav class="nav-menu">
+      <!-- Navigation pour tous -->
+      <a routerLink="/" class="nav-link">Accueil</a>
+      <a routerLink="/articles" class="nav-link">Articles</a>
+      
+      <!-- Navigation pour utilisateurs non connectés -->
+      <ng-container *ngIf="!authService.isAuthenticated">
+        <a routerLink="/login" class="nav-link">Connexion</a>
+        <a routerLink="/register" class="nav-link btn-primary">S'inscrire</a>
+      </ng-container>
+      
+      <!-- Navigation pour utilisateurs connectés -->
+      <ng-container *ngIf="authService.isAuthenticated">
+        <a routerLink="/dashboard" class="nav-link">Dashboard</a>
+        <a routerLink="/articles/new" class="nav-link" *ngIf="authService.isAuthor">Nouvel Article</a>
+        <button (click)="logout()" class="nav-link btn-logout">Déconnexion</button>
+      </ng-container>
+    </nav>
+  </div>
+</header>
+
+<!-- Contenu principal -->
+<main class="main-content">
+  <router-outlet></router-outlet>
+</main>
