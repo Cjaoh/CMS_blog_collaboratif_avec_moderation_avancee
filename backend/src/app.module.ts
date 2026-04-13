@@ -9,6 +9,10 @@ import { ArticlesModule } from './articles/articles.module';
 import { CategoriesModule } from './categories/categories.module';
 import { CommentsModule } from './comments/comments.module';
 import { SeedDataService } from './scripts/seed-data';
+import { UserSchema } from './users/schemas/user.schema';
+import { ArticleSchema } from './articles/schemas/article.schema';
+import { CategorySchema } from './categories/schemas/category.schema';
+import { CommentSchema } from './comments/schemas/comment.schema';
 
 @Module({
   imports: [
@@ -23,6 +27,12 @@ import { SeedDataService } from './scripts/seed-data';
       }),
       inject: [ConfigService],
     }),
+    MongooseModule.forFeature([
+      { name: 'User', schema: UserSchema },
+      { name: 'Article', schema: ArticleSchema },
+      { name: 'Category', schema: CategorySchema },
+      { name: 'Comment', schema: CommentSchema },
+    ]),
     AuthModule,
     UsersModule,
     ArticlesModule,

@@ -1,93 +1,207 @@
-<div class="article-detail-container" *ngIf="article; else loading">
-  <mat-card class="article-card">
-    <mat-card-header>
-      <div mat-card-avatar>
-        <img [src]="article.author.avatar || 'assets/default-avatar.png'" [alt]="article.author.firstName">
+<!-- HEADER DE L'ARTICLE -->
+<header class="article-header" *ngIf="article; else loading">
+  <div class="container">
+    <div class="header-content">
+      <div class="category-badge">
+        {{ article.categories[0]?.name || 'Recette' }}
       </div>
-      <mat-card-title>{{ article.title }}</mat-card-title>
-      <mat-card-subtitle>
-        {{ article.author.firstName }} {{ article.author.lastName }} | 
-        {{ article.publishedAt | date:'dd MMMM yyyy' }}
-      </mat-card-subtitle>
-    </mat-card-header>
-    
-    <img mat-card-image [src]="article.featuredImage || 'assets/default-article.jpg'" [alt]="article.title">
-    
-    <mat-card-content>
-      <div class="article-content">
-        <p class="excerpt">{{ article.excerpt }}</p>
-        <div class="content" [innerHTML]="article.content"></div>
-      </div>
+      <h1 class="article-title">{{ article.title }}</h1>
+      <p class="article-excerpt">{{ article.excerpt }}</p>
       
-      <div class="tags" *ngIf="article.tags.length > 0">
-        <mat-chip *ngFor="let tag of article.tags">{{ tag }}</mat-chip>
+      <div class="article-meta">
+        <div class="author-info">
+          <div class="author-avatar">
+            {{ getAuthorInitials(article.author) }}
+          </div>
+          <div class="author-details">
+            <span class="author-name">{{ article.author.firstName }} {{ article.author.lastName }}</span>
+            <span class="publish-date">{{ article.publishedAt | date:'dd MMMM yyyy' }}</span>
+          </div>
+        </div>
+        
+        <div class="article-stats">
+          <span class="stat-item">
+            <span class="stat-icon">visibility</span>
+            {{ article.viewsCount }}
+          </span>
+          <span class="stat-item">
+            <span class="stat-icon">favorite</span>
+            {{ article.likesCount }}
+          </span>
+          <span class="stat-item">
+            <span class="stat-icon">comment</span>
+            {{ article.commentsCount }}
+          </span>
+          <span class="stat-item">
+            <span class="stat-icon">schedule</span>
+            {{ article.readTimeMinutes }} min
+          </span>
+        </div>
       </div>
-    </mat-card-content>
-    
-    <mat-card-actions>
-      <div class="article-stats">
-        <span><mat-icon>visibility</mat-icon> {{ article.viewsCount }}</span>
-        <span><mat-icon>favorite</mat-icon> {{ article.likesCount }}</span>
-        <span><mat-icon>comment</mat-icon> {{ article.commentsCount }}</span>
-      </div>
-      
-      <div class="article-actions">
-        <button mat-icon-button (click)="likeArticle()">
-          <mat-icon>favorite_border</mat-icon>
-        </button>
-        <button mat-icon-button (click)="shareArticle()">
-          <mat-icon>share</mat-icon>
-        </button>
-      </div>
-    </mat-card-actions>
-  </mat-card>
+    </div>
+  </div>
+</header>
 
-  <!-- Section commentaires -->
-  <mat-card class="comments-section" *ngIf="authService.isAuthenticated">
-    <mat-card-header>
-      <mat-card-title>Commentaires</mat-card-title>
-    </mat-card-header>
-    
-    <mat-card-content>
-      <!-- Formulaire d'ajout de commentaire -->
-      <div class="add-comment">
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Ajouter un commentaire</mat-label>
-          <textarea matInput rows="3" [(ngModel)]="newComment" placeholder="Votre commentaire..."></textarea>
-        </mat-form-field>
-        <button mat-raised-button color="primary" (click)="addComment()">
-          <mat-icon>send</mat-icon>
-          Publier
-        </button>
+<!-- IMAGE PRINCIPALE -->
+<section class="hero-image" *ngIf="article">
+  <div class="image-container">
+    <img [src]="article.featuredImage || 'https://picsum.photos/seed/recipe/1200/600'" 
+         [alt]="article.title" 
+         class="main-image">
+    <div class="image-overlay"></div>
+  </div>
+</section>
+
+<!-- CONTENU PRINCIPAL -->
+<main class="recipe-content" *ngIf="article">
+  <div class="container">
+    <div class="content-layout">
+      
+      <!-- COLONNE PRINCIPALE -->
+      <div class="main-column">
+        
+        <!-- INGRÉDIENTS -->
+        <section class="ingredients-section">
+          <h2 class="section-title">
+            <span class="section-icon">shopping_cart</span>
+            Ingrédients
+          </h2>
+          <div class="ingredients-grid" [innerHTML]="extractIngredients(article.content)"></div>
+        </section>
+        
+        <!-- PRÉPARATION -->
+        <section class="preparation-section">
+          <h2 class="section-title">
+            <span class="section-icon">restaurant</span>
+            Préparation
+          </h2>
+          <div class="preparation-steps" [innerHTML]="extractPreparation(article.content)"></div>
+        </section>
+        
+        <!-- TEMPS DE PRÉPARATION -->
+        <section class="timing-section" *ngIf="extractTiming(article.content)">
+          <h2 class="section-title">
+            <span class="section-icon">schedule</span>
+            Temps de préparation
+          </h2>
+          <div class="timing-info" [innerHTML]="extractTiming(article.content)"></div>
+        </section>
+        
+        <!-- ACTIONS -->
+        <section class="actions-section">
+          <div class="action-buttons">
+            <button class="btn btn-primary" (click)="likeArticle()">
+              <span class="btn-icon">favorite</span>
+              J'aime ({{ article.likesCount }})
+            </button>
+            <button class="btn btn-secondary" (click)="shareArticle()">
+              <span class="btn-icon">share</span>
+              Partager
+            </button>
+            <button class="btn btn-outline" (click)="printRecipe()">
+              <span class="btn-icon">print</span>
+              Imprimer
+            </button>
+          </div>
+        </section>
+        
+        <!-- TAGS -->
+        <section class="tags-section" *ngIf="article.tags && article.tags.length > 0">
+          <h3 class="section-subtitle">Tags</h3>
+          <div class="tags-container">
+            <span class="tag" *ngFor="let tag of article.tags">#{{ tag }}</span>
+          </div>
+        </section>
+        
       </div>
       
-      <!-- Liste des commentaires -->
-      <div class="comments-list" *ngIf="comments.length > 0; else noComments">
-        <div class="comment" *ngFor="let comment of comments">
-          <div class="comment-header">
-            <img [src]="comment.author.avatar || 'assets/default-avatar.png'" [alt]="comment.author.firstName" class="comment-avatar">
-            <div class="comment-meta">
-              <strong>{{ comment.author.firstName }} {{ comment.author.lastName }}</strong>
-              <span>{{ comment.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+      <!-- COLONNE LATÉRALE -->
+      <aside class="sidebar">
+        
+        <!-- INFOS NUTRITIONNELLES -->
+        <div class="nutrition-card">
+          <h3 class="card-title">
+            <span class="card-icon">restaurant_menu</span>
+            Informations
+          </h3>
+          <div class="nutrition-info">
+            <div class="nutrition-item">
+              <span class="label">Difficulté</span>
+              <span class="value">Moyenne</span>
+            </div>
+            <div class="nutrition-item">
+              <span class="label">Coût</span>
+              <span class="value">Modéré</span>
+            </div>
+            <div class="nutrition-item">
+              <span class="label">Portions</span>
+              <span class="value">4 personnes</span>
             </div>
           </div>
-          <div class="comment-content">{{ comment.content }}</div>
         </div>
-      </div>
-      
-      <ng-template #noComments>
-        <div class="no-comments">
-          <mat-icon class="large-icon">comment</mat-icon>
-          <p>Soyez le premier à commenter !</p>
+        
+        <!-- AUTEUR -->
+        <div class="author-card">
+          <h3 class="card-title">
+            <span class="card-icon">person</span>
+            Auteur
+          </h3>
+          <div class="author-profile">
+            <div class="author-avatar-large">
+              {{ getAuthorInitials(article.author) }}
+            </div>
+            <div class="author-info">
+              <h4>{{ article.author.firstName }} {{ article.author.lastName }}</h4>
+              <p>Chef passionné</p>
+              <div class="author-stats">
+                <span>12 recettes</span>
+              </div>
+            </div>
+          </div>
         </div>
-      </ng-template>
-    </mat-card-content>
-  </mat-card>
-</div>
+        
+        <!-- COMMENTAIRES -->
+        <div class="comments-card" *ngIf="authService.isAuthenticated">
+          <h3 class="card-title">
+            <span class="card-icon">comment</span>
+            Commentaires ({{ article.commentsCount }})
+          </h3>
+          
+          <div class="add-comment">
+            <textarea 
+              [(ngModel)]="newComment" 
+              placeholder="Partagez votre avis sur cette recette..."
+              class="comment-input">
+            </textarea>
+            <button class="btn btn-primary btn-small" (click)="addComment()">
+              Publier
+            </button>
+          </div>
+          
+          <div class="comments-list" *ngIf="comments.length > 0">
+            <div class="comment" *ngFor="let comment of comments.slice(0, 3)">
+              <div class="comment-header">
+                <div class="comment-avatar">
+                  {{ getAuthorInitials(comment.author) }}
+                </div>
+                <div class="comment-meta">
+                  <strong>{{ comment.author.firstName }}</strong>
+                  <span>{{ comment.createdAt | date:'dd MMM' }}</span>
+                </div>
+              </div>
+              <div class="comment-content">{{ comment.content }}</div>
+            </div>
+          </div>
+        </div>
+        
+      </aside>
+    </div>
+  </div>
+</main>
 
 <ng-template #loading>
   <div class="loading-container">
-    <mat-spinner></mat-spinner>
-    <p>Chargement de l'article...</p>
+    <div class="loading-spinner"></div>
+    <p>Chargement de la recette...</p>
   </div>
 </ng-template>

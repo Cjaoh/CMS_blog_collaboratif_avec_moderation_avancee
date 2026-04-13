@@ -125,4 +125,67 @@ export class ArticleDetailComponent implements OnInit {
       });
     }
   }
+
+  // Helper methods pour extraire le contenu
+  getAuthorInitials(author: any): string {
+    if (author?.firstName && author?.lastName) {
+      return `${author.firstName[0]}${author.lastName[0]}`.toUpperCase();
+    }
+    return '??';
+  }
+
+  extractIngredients(content: string): string {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = content;
+    
+    const h2Elements = tempDiv.querySelectorAll('h2');
+    for (const h2 of h2Elements) {
+      if (h2.textContent?.toLowerCase().includes('ingrédients')) {
+        const ul = h2.nextElementSibling;
+        if (ul && ul.tagName === 'UL') {
+          return ul.outerHTML;
+        }
+      }
+    }
+    
+    return '<ul><li>Ingrédients non disponibles</li></ul>';
+  }
+
+  extractPreparation(content: string): string {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = content;
+    
+    const h2Elements = tempDiv.querySelectorAll('h2');
+    for (const h2 of h2Elements) {
+      if (h2.textContent?.toLowerCase().includes('préparation')) {
+        const ol = h2.nextElementSibling;
+        if (ol && ol.tagName === 'OL') {
+          return ol.outerHTML;
+        }
+      }
+    }
+    
+    return '<ol><li>Préparation non disponible</li></ol>';
+  }
+
+  extractTiming(content: string): string {
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = content;
+    
+    const h2Elements = tempDiv.querySelectorAll('h2');
+    for (const h2 of h2Elements) {
+      if (h2.textContent?.toLowerCase().includes('temps')) {
+        const p = h2.nextElementSibling;
+        if (p && p.tagName === 'P') {
+          return p.outerHTML;
+        }
+      }
+    }
+    
+    return '';
+  }
+
+  printRecipe(): void {
+    window.print();
+  }
 }

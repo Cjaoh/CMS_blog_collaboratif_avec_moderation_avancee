@@ -1,118 +1,162 @@
-<div class="hero-container">
-  <!-- Animation de fond -->
-  <div class="background-animation">
-    <div class="floating-ingredients">
-      <div class="ingredient ingredient-1"></div>
-      <div class="ingredient ingredient-2"></div>
-      <div class="ingredient ingredient-3"></div>
-      <div class="ingredient ingredient-4"></div>
-      <div class="ingredient ingredient-5"></div>
-      <div class="ingredient ingredient-6"></div>
-      <div class="ingredient ingredient-7"></div>
-      <div class="ingredient ingredient-8"></div>
-    </div>
-    
-    <!-- Particules animées -->
-    <div class="particles">
-      <div class="particle"></div>
-      <div class="particle"></div>
-      <div class="particle"></div>
-      <div class="particle"></div>
-      <div class="particle"></div>
-      <div class="particle"></div>
-      <div class="particle"></div>
-      <div class="particle"></div>
-      <div class="particle"></div>
-      <div class="particle"></div>
-    </div>
-  </div>
-
-  <!-- Contenu principal -->
+<!-- HERO SECTION -->
+<section class="hero-section">
   <div class="hero-content">
-    <div class="hero-text">
-      <h1 class="hero-title">
-        <span class="word-animate">Blog</span>
-        <span class="word-animate delay-1">collaboratif</span>
-        <span class="word-animate delay-2">de</span>
-        <span class="word-animate delay-3">recettes</span>
-        <span class="word-animate delay-4">de</span>
-        <span class="word-animate delay-5">cuisine</span>
-      </h1>
-      
-      <p class="hero-subtitle">
-        Partagez vos passion, découvrez de nouvelles saveurs, et créez ensemble une communauté de passionnés de cuisine
-      </p>
-      
-      <div class="hero-actions">
-        <a mat-raised-button color="primary" routerLink="/register" class="cta-button">
-          <mat-icon>restaurant</mat-icon>
-          Rejoindre la communauté
-        </a>
-        
-        <a mat-stroked-button color="accent" routerLink="/articles" class="cta-secondary">
-          <mat-icon>menu_book</mat-icon>
-          Explorer les recettes
-        </a>
-      </div>
-    </div>
-    
-    <!-- Icônes de cuisine animées -->
-    <div class="kitchen-icons">
-      <div class="icon-container">
-        <mat-icon class="kitchen-icon icon-1">restaurant</mat-icon>
-      </div>
-      <div class="icon-container">
-        <mat-icon class="kitchen-icon icon-2">local_pizza</mat-icon>
-      </div>
-      <div class="icon-container">
-        <mat-icon class="kitchen-icon icon-3">local_cafe</mat-icon>
-      </div>
-      <div class="icon-container">
-        <mat-icon class="kitchen-icon icon-4">cake</mat-icon>
-      </div>
-      <div class="icon-container">
-        <mat-icon class="kitchen-icon icon-5">local_bar</mat-icon>
-      </div>
+    <div class="hero-badge">✦ CMS Culinaire Collaboratif</div>
+    <h1 class="hero-title">
+      Écrivez, partagez, élevez <span class="highlight">l'art culinaire</span>
+    </h1>
+    <p class="hero-subtitle">
+      Rejoignez une communauté passionnée de chefs amateurs et professionnels pour partager vos meilleures créations culinaires
+    </p>
+    <div class="hero-buttons">
+      <a routerLink="/auth/register" class="btn btn-primary">Publier une recette</a>
+      <a routerLink="/articles" class="btn btn-secondary">Explorer le blog</a>
     </div>
   </div>
   
-  <!-- Vagues décoratives -->
-  <div class="waves">
-    <div class="wave wave-1"></div>
-    <div class="wave wave-2"></div>
-    <div class="wave wave-3"></div>
-  </div>
-</div>
-
-<!-- Section features -->
-<section class="features-section">
-  <div class="container">
-    <h2 class="section-title">Pourquoi nous rejoindre ?</h2>
-    
-    <div class="features-grid">
-      <div class="feature-card">
-        <mat-icon class="feature-icon">group</mat-icon>
-        <h3>Communauté</h3>
-        <p>Rejoignez une communauté passionnée par la cuisine et partagez vos expériences</p>
-      </div>
-      
-      <div class="feature-card">
-        <mat-icon class="feature-icon">star</mat-icon>
-        <h3>Recettes de qualité</h3>
-        <p>Découvrez des recettes testées et validées par notre communauté</p>
-      </div>
-      
-      <div class="feature-card">
-        <mat-icon class="feature-icon">school</mat-icon>
-        <h3>Apprentissage</h3>
-        <p>Apprenez de nouvelles techniques et améliorez vos compétences culinaires</p>
-      </div>
-      
-      <div class="feature-card">
-        <mat-icon class="feature-icon">eco</mat-icon>
-        <h3>Cuisine durable</h3>
-        <p>Partagez des recettes respectueuses de l'environnement et de la santé</p>
-      </div>
+  <!-- STATS BAR -->
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-number">{{ stats.publishedArticles || 0 }}</div>
+      <div class="stat-label">Articles publiés</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">{{ stats.activeAuthors || 0 }}</div>
+      <div class="stat-label">Auteurs actifs</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">{{ stats.monthlyReaders || 0 }}</div>
+      <div class="stat-label">Lecteurs/mois</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-number">{{ stats.qualityRate || 0 }}%</div>
+      <div class="stat-label">Taux de qualité</div>
     </div>
   </div>
 </section>
+
+<!-- ACTIVITÉ EN TEMPS RÉEL -->
+<section class="activity-section">
+  <div class="container">
+    <div class="activity-card">
+      <div class="activity-header">
+        <div class="activity-indicator">
+          <div class="pulse-dot"></div>
+        </div>
+        <h2>Activité en temps réel</h2>
+      </div>
+      <div class="activity-list" *ngIf="recentActivity.length > 0; else emptyActivity">
+        <div class="activity-item" *ngFor="let activity of recentActivity; trackBy: trackByActivityId">
+          <div class="activity-icon" [ngClass]="getActivityIconClass(activity.type)">
+            {{ getActivityEmoji(activity.type) }}
+          </div>
+          <div class="activity-content">
+            <p class="activity-text">
+              <strong>{{ activity.user.firstName }} {{ activity.user.lastName }}</strong>
+              {{ getActivityText(activity.type) }}
+              <strong>{{ activity.article.title }}</strong>
+            </p>
+            <span class="activity-time">{{ formatTime(activity.timestamp) }}</span>
+          </div>
+          <div class="activity-badge" [ngClass]="getActivityBadgeClass(activity.type)">
+            {{ activity.badge }}
+          </div>
+        </div>
+      </div>
+      <ng-template #emptyActivity>
+        <div class="empty-activity">
+          <p>Aucune activité récente</p>
+        </div>
+      </ng-template>
+    </div>
+  </div>
+</section>
+
+<!-- ARTICLES À LA UNE -->
+<section class="featured-section">
+  <div class="container">
+    <div class="section-header">
+      <h2>Articles à la une</h2>
+      <a routerLink="/articles" class="view-all-link">Voir tout →</a>
+    </div>
+    <div class="featured-grid" *ngIf="featuredArticles.length > 0; else emptyFeatured">
+      <!-- GRANDE CARD À GAUCHE -->
+      <div class="featured-card featured-card-large" *ngIf="featuredArticles[0]" [routerLink]="['/articles', featuredArticles[0]._id]">
+        <div class="featured-image" [ngClass]="getCategoryColorClass(featuredArticles[0].categories[0]?.name)">
+          {{ getArticleEmoji(featuredArticles[0]) }}
+        </div>
+        <div class="featured-content">
+          <div class="featured-category">{{ featuredArticles[0].categories[0]?.name || 'Non classé' }}</div>
+          <h3 class="featured-title">{{ featuredArticles[0].title }}</h3>
+          <div class="featured-meta">
+            <span class="featured-author">{{ featuredArticles[0].author.firstName }} {{ featuredArticles[0].author.lastName }}</span>
+            <div class="featured-rating">
+              <span class="stars">⭐ {{ getRating(featuredArticles[0]) }}</span>
+              <span class="duration">⏱️ {{ featuredArticles[0].readTimeMinutes }}min</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- PETITES CARDS À DROITE -->
+      <div class="featured-small-cards">
+        <div class="featured-card featured-card-small" 
+             *ngFor="let article of featuredArticles.slice(1, 3); trackBy: trackByArticleId"
+             [routerLink]="['/articles', article._id]">
+          <div class="featured-image" [ngClass]="getCategoryColorClass(article.categories[0]?.name)">
+            {{ getArticleEmoji(article) }}
+          </div>
+          <div class="featured-content">
+            <div class="featured-category">{{ article.categories[0]?.name || 'Non classé' }}</div>
+            <h4 class="featured-title">{{ article.title }}</h4>
+            <div class="featured-meta">
+              <span class="featured-author">{{ article.author.firstName }} {{ article.author.lastName }}</span>
+              <span class="stars">⭐ {{ getRating(article) }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <ng-template #emptyFeatured>
+      <div class="empty-featured">
+        <div class="empty-icon">🍽️</div>
+        <p>Aucun article à la une pour le moment</p>
+      </div>
+    </ng-template>
+  </div>
+</section>
+
+<!-- CATÉGORIES -->
+<section class="categories-section">
+  <div class="container">
+    <h2 class="section-title">Explorer par catégories</h2>
+    <div class="categories-grid">
+      <a class="category-card" 
+         routerLink="/articles" 
+         [queryParams]="{category: 'entrées'}"
+         *ngFor="let category of categories; trackBy: trackByCategoryId">
+        <div class="category-icon">{{ category.icon }}</div>
+        <h3>{{ category.name }}</h3>
+        <p class="category-count">{{ category.count }} articles</p>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- CTA REJOINDRE -->
+<section class="cta-section">
+  <div class="container">
+    <div class="cta-content">
+      <h2>Devenez auteur sur la plateforme</h2>
+      <p>Partagez votre passion pour la cuisine avec des milliers de lecteurs passionnés</p>
+      <a routerLink="/auth/register" class="btn btn-primary btn-large">Commencer maintenant</a>
+    </div>
+  </div>
+</section>
+
+<!-- LOADING SKELETONS -->
+<div class="skeleton-container" *ngIf="loading">
+  <div class="skeleton-hero"></div>
+  <div class="skeleton-activity"></div>
+  <div class="skeleton-featured"></div>
+</div>

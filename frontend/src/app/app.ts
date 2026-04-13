@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet } from '@angular/router';
+import { RouterOutlet, RouterLink } from '@angular/router';
 import { AuthService } from './shared/services/auth.service';
 
 @Component({
@@ -8,7 +8,8 @@ import { AuthService } from './shared/services/auth.service';
   standalone: true,
   imports: [
     CommonModule,
-    RouterOutlet
+    RouterOutlet,
+    RouterLink
   ],
   templateUrl: './app.html',
   styleUrls: ['./app.css']

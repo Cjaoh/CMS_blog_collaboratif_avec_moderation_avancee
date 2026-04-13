@@ -1,5 +1,7 @@
 export enum UserRole {
+  READER = 'reader',
   AUTHOR = 'author',
+  MODERATOR = 'moderator',
   EDITOR = 'editor',
   ADMIN = 'admin'
 }
@@ -21,6 +23,7 @@ export interface User {
   bio?: string;
   specialties: string[];
   articlesCount: number;
+  level: string;
   emailVerified: boolean;
   lastLoginAt?: string;
   createdAt: string;

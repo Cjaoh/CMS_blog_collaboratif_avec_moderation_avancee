@@ -1,75 +1,274 @@
-<div class="container">
-  <div class="header">
-    <h1>Articles</h1>
-    <button mat-raised-button color="primary" routerLink="/articles/new" *ngIf="authService.isAuthor">
-      <mat-icon>add</mat-icon>
-      Nouvel Article
-    </button>
-  </div>
-
-  <div class="filters">
-    <mat-form-field appearance="outline">
-      <mat-label>Rechercher</mat-label>
-      <input matInput (keyup)="onSearch($event)" placeholder="Rechercher un article...">
-    </mat-form-field>
-    
-    <mat-form-field appearance="outline">
-      <mat-label>Catégorie</mat-label>
-      <mat-select (selectionChange)="onCategoryChange($event.value)">
-        <mat-option value="">Toutes</mat-option>
-        <mat-option *ngFor="let category of categories" [value]="category._id">
-          {{ category.name }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
-  </div>
-
-  <div class="articles-grid" *ngIf="articles.length > 0; else noArticles">
-    <mat-card class="article-card" *ngFor="let article of articles">
-      <mat-card-header>
-        <div mat-card-avatar>
-          <img [src]="article.author.avatar || 'assets/default-avatar.png'" [alt]="article.author.firstName">
-        </div>
-        <mat-card-title>{{ article.title }}</mat-card-title>
-        <mat-card-subtitle>
-          {{ article.author.firstName }} {{ article.author.lastName }} | 
-          {{ article.publishedAt | date:'dd/MM/yyyy' }}
-        </mat-card-subtitle>
-      </mat-card-header>
-      
-      <img mat-card-image [src]="article.featuredImage || 'assets/default-article.jpg'" [alt]="article.title">
-      
-      <mat-card-content>
-        <p>{{ article.excerpt }}</p>
-        <div class="tags">
-          <mat-chip *ngFor="let tag of article.tags">{{ tag }}</mat-chip>
-        </div>
-      </mat-card-content>
-      
-      <mat-card-actions>
-        <button mat-button color="primary" [routerLink]="['/articles', article._id]">
-          Lire la suite
+<!-- HEADER PAGE -->
+<header class="page-header">
+  <div class="container">
+    <div class="header-content">
+      <div class="header-text">
+        <h1 class="page-title">📰 Blog des recettes</h1>
+        <p class="page-subtitle">Découvrez des milliers de recettes partagées par notre communauté passionnée</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-primary" routerLink="/articles/new" *ngIf="authService.isAuthenticated">
+          ✍️ Écrire
         </button>
-        <div class="stats">
-          <span><mat-icon>visibility</mat-icon> {{ article.viewsCount }}</span>
-          <span><mat-icon>favorite</mat-icon> {{ article.likesCount }}</span>
-          <span><mat-icon>comment</mat-icon> {{ article.commentsCount }}</span>
-        </div>
-      </mat-card-actions>
-    </mat-card>
-  </div>
-
-  <ng-template #noArticles>
-    <div class="no-articles">
-      <mat-icon class="large-icon">article</mat-icon>
-      <h2>Aucun article trouvé</h2>
-      <p>Commencez par créer votre premier article !</p>
-      <button mat-raised-button color="primary" routerLink="/articles/new" *ngIf="authService.isAuthor">
-        Créer un article
-      </button>
+      </div>
     </div>
-  </ng-template>
+    
+    <!-- STATS DORÉES -->
+    <div class="header-stats">
+      <div class="stat-item">
+        <div class="stat-number">{{ stats.published || 0 }}</div>
+        <div class="stat-label">Publiés</div>
+      </div>
+      <div class="stat-item" *ngIf="authService.isModerator">
+        <div class="stat-number">{{ stats.pending || 0 }}</div>
+        <div class="stat-label">En attente</div>
+      </div>
+    </div>
+  </div>
+</header>
 
-  <mat-paginator [length]="total" [pageSize]="10" [pageSizeOptions]="[5, 10, 25]" (page)="onPageChange($event)">
-  </mat-paginator>
-</div>
+<!-- BARRE DE FILTRES -->
+<section class="filters-section">
+  <div class="container">
+    <div class="filters-layout">
+      <!-- CHAMP DE RECHERCHE -->
+      <div class="search-field">
+        <input 
+          type="text" 
+          placeholder="Rechercher une recette..." 
+          [(ngModel)]="filters.search" 
+          (ngModelChange)="onSearchChange($event)"
+          class="search-input">
+        <div class="search-icon">🔍</div>
+      </div>
+      
+      <!-- SELECTS -->
+      <div class="filter-selects">
+        <select [(ngModel)]="filters.category" (change)="onFilterChange()" class="filter-select">
+          <option value="">Toutes les catégories</option>
+          <option value="entrées">🥗 Entrées</option>
+          <option value="plats">🍖 Plats</option>
+          <option value="desserts">🍰 Desserts</option>
+          <option value="cuisine-du-monde">🌍 Cuisine du monde</option>
+          <option value="boissons">🥤 Boissons</option>
+        </select>
+        
+        <select 
+          [(ngModel)]="filters.status" 
+          (change)="onFilterChange()" 
+          class="filter-select"
+          *ngIf="authService.isModerator">
+          <option value="">Tous les statuts</option>
+          <option value="published">✅ Publié</option>
+          <option value="pending">⏳ En attente</option>
+          <option value="rejected">❌ Rejeté</option>
+        </select>
+        
+        <select 
+          [(ngModel)]="filters.author" 
+          (change)="onFilterChange()" 
+          class="filter-select"
+          *ngIf="authService.isAuthenticated">
+          <option value="">Tous les auteurs</option>
+          <option value="me">👤 Mes articles</option>
+        </select>
+      </div>
+      
+      <!-- BOUTON EFFACER -->
+      <button class="btn btn-secondary" (click)="clearFilters()">Effacer</button>
+    </div>
+  </div>
+</section>
+
+<!-- BARRE DE TRI -->
+<section class="sort-section">
+  <div class="container">
+    <div class="sort-layout">
+      <div class="results-count">
+        <span class="count-number">{{ total }}</span>
+        <span class="count-text">articles trouvés</span>
+      </div>
+      
+      <div class="sort-tabs">
+        <button 
+          class="sort-tab" 
+          [class.active]="filters.sortBy === 'popular'"
+          (click)="setSortBy('popular')">
+          Populaires
+        </button>
+        <button 
+          class="sort-tab" 
+          [class.active]="filters.sortBy === 'recent'"
+          (click)="setSortBy('recent')">
+          Récents
+        </button>
+        <button 
+          class="sort-tab" 
+          [class.active]="filters.sortBy === 'rated'"
+          (click)="setSortBy('rated')">
+          Mieux notés
+        </button>
+        <button 
+          class="sort-tab" 
+          [class.active]="filters.sortBy === 'moderation'"
+          (click)="setSortBy('moderation')"
+          *ngIf="authService.isModerator">
+          À modérer
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- LAYOUT 2 COLONNES -->
+<main class="main-content">
+  <div class="container">
+    <div class="content-layout">
+      <!-- COLONNE PRINCIPALE -->
+      <div class="main-column">
+        <!-- LOADING SKELETON -->
+        <div class="skeleton-grid" *ngIf="loading && articles.length === 0">
+          <div class="skeleton-card" *ngFor="let i of [1,2,3,4]">
+            <div class="skeleton-image"></div>
+            <div class="skeleton-content">
+              <div class="skeleton-line skeleton-title"></div>
+              <div class="skeleton-line skeleton-text"></div>
+              <div class="skeleton-line skeleton-text short"></div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- ERROR STATE -->
+        <div class="error-state" *ngIf="error && !loading">
+          <div class="error-icon">❌</div>
+          <h3>Erreur de chargement</h3>
+          <p>{{ error }}</p>
+          <button class="btn btn-primary" (click)="loadArticles()">Réessayer</button>
+        </div>
+        
+        <!-- EMPTY STATE -->
+        <div class="empty-state" *ngIf="!loading && !error && articles.length === 0">
+          <div class="empty-icon">🍽️</div>
+          <h3>Aucune recette trouvée</h3>
+          <p>Essayez de modifier vos filtres ou votre recherche</p>
+          <button class="btn btn-secondary" (click)="clearFilters()">Réinitialiser les filtres</button>
+        </div>
+        
+        <!-- GRILLE D'ARTICLES -->
+        <div class="articles-grid" *ngIf="!loading && !error && articles.length > 0">
+          <article 
+            class="article-card" 
+            *ngFor="let article of articles; trackBy: trackByArticleId"
+            [routerLink]="['/articles', article._id]"
+            [class.pending-article]="article.status === 'pending'">
+            
+            <!-- IMAGE ET BADGES -->
+            <div class="card-header">
+              <div class="card-image" [ngClass]="getCategoryColorClass(article.categories[0]?.name)">
+                {{ getArticleEmoji(article) }}
+              </div>
+              <div class="card-badges">
+                <div class="category-badge">{{ article.categories[0]?.name || 'Non classé' }}</div>
+                <div class="status-badge" [ngClass]="getStatusClass(article.status)">
+                  {{ getStatusText(article.status) }}
+                </div>
+              </div>
+            </div>
+            
+            <!-- CONTENU -->
+            <div class="card-content">
+              <h3 class="article-title">{{ article.title }}</h3>
+              <div class="article-meta">
+                <div class="author-info">
+                  <div class="author-avatar">{{ getAuthorInitials(article.author) }}</div>
+                  <span class="author-name">{{ article.author.firstName }} {{ article.author.lastName }}</span>
+                </div>
+                <div class="article-stats">
+                  <span class="duration">⏱️ {{ article.readTimeMinutes }}min</span>
+                  <span class="rating">⭐ {{ getRating(article) }}</span>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+        
+        <!-- PAGINATION -->
+        <div class="pagination" *ngIf="!loading && !error && totalPages > 1">
+          <button 
+            class="pagination-btn" 
+            [disabled]="currentPage === 1"
+            (click)="goToPage(currentPage - 1)">
+            ← Précédent
+          </button>
+          
+          <div class="pagination-numbers">
+            <button 
+              *ngFor="let page of getVisiblePages()" 
+              class="pagination-number"
+              [class.active]="page === currentPage"
+              [class.ellipsis]="page === '...'"
+              [disabled]="page === '...'"
+              (click)="typeof page === 'number' && goToPage(page)">
+              {{ page }}
+            </button>
+          </div>
+          
+          <button 
+            class="pagination-btn" 
+            [disabled]="currentPage === totalPages"
+            (click)="goToPage(currentPage + 1)">
+            Suivant →
+          </button>
+        </div>
+      </div>
+      
+      <!-- COLONNE LATÉRALE -->
+      <aside class="sidebar">
+        <!-- PANEL MODÉRATION -->
+        <div class="moderation-panel" *ngIf="authService.isModerator">
+          <h3 class="panel-title">📊 Modération</h3>
+          <div class="moderation-stats">
+            <div class="stat-row published">
+              <div class="stat-bar">
+                <div class="stat-fill" [style.width.%]="getPercentage(moderationStats.published, moderationStats.total)"></div>
+              </div>
+              <span class="stat-label">Publiés ({{ moderationStats.published }})</span>
+            </div>
+            <div class="stat-row pending">
+              <div class="stat-bar">
+                <div class="stat-fill" [style.width.%]="getPercentage(moderationStats.pending, moderationStats.total)"></div>
+              </div>
+              <span class="stat-label">En attente ({{ moderationStats.pending }})</span>
+            </div>
+            <div class="stat-row rejected">
+              <div class="stat-bar">
+                <div class="stat-fill" [style.width.%]="getPercentage(moderationStats.rejected, moderationStats.total)"></div>
+              </div>
+              <span class="stat-label">Rejetés ({{ moderationStats.rejected }})</span>
+            </div>
+          </div>
+          <button class="btn btn-secondary btn-small" routerLink="/admin/moderation">
+            Tableau de bord →
+          </button>
+        </div>
+        
+        <!-- PANEL TOP AUTEURS -->
+        <div class="authors-panel">
+          <h3 class="panel-title">👥 Top auteurs</h3>
+          <div class="authors-list">
+            <div class="author-item" *ngFor="let author of topAuthors; trackBy: trackByUserId">
+              <div class="author-avatar" [ngClass]="getAuthorLevelClass(author.level)">
+                {{ getAuthorInitials(author) }}
+              </div>
+              <div class="author-info">
+                <div class="author-name">{{ author.firstName }} {{ author.lastName }}</div>
+                <div class="author-stats">{{ author.articlesCount }} articles</div>
+              </div>
+              <div class="author-badge">{{ author.level }}</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</main>

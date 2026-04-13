@@ -81,3 +81,25 @@ export interface ArticlesResponse {
   total: number;
   pages: number;
 }
+
+export interface ModerationStats {
+  published: number;
+  pending: number;
+  rejected: number;
+  total: number;
+}
+
+export interface Activity {
+  type: 'submitted' | 'approved' | 'rejected' | 'commented';
+  user: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+  };
+  article: {
+    _id: string;
+    title: string;
+  };
+  timestamp: string;
+  badge: string;
+}

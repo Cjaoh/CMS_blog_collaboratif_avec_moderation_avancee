@@ -93,6 +93,16 @@ export class AuthService {
     return !!user;
   }
 
+  get isModerator(): boolean {
+    const user = this.currentUserSubject.value;
+    return user?.role === 'moderator' || user?.role === 'admin';
+  }
+
+  hasRole(role: string): boolean {
+    const user = this.currentUserSubject.value;
+    return user?.role === role;
+  }
+
   private storeTokens(response: AuthResponse): void {
     localStorage.setItem('accessToken', response.accessToken);
     localStorage.setItem('refreshToken', response.refreshToken);

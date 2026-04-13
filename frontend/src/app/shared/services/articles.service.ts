@@ -7,7 +7,9 @@ import {
   CreateArticleDto, 
   UpdateArticleDto, 
   ArticlesResponse,
-  ArticleStatus 
+  ArticleStatus,
+  ModerationStats,
+  Activity
 } from '../models/article.model';
 
 @Injectable({
@@ -18,29 +20,7 @@ export class ArticlesService {
 
   constructor(private http: HttpClient) {}
 
-  getArticles(
-    page = 1,
-    limit = 10,
-    status = ArticleStatus.PUBLISHED,
-    category?: string,
-    author?: string
-  ): Observable<ArticlesResponse> {
-    let params = new HttpParams()
-      .set('page', page.toString())
-      .set('limit', limit.toString())
-      .set('status', status);
-
-    if (category) {
-      params = params.set('category', category);
-    }
-
-    if (author) {
-      params = params.set('author', author);
-    }
-
-    return this.http.get<ArticlesResponse>(this.apiUrl, { params });
-  }
-
+  
   getArticle(id: string): Observable<Article> {
     return this.http.get<Article>(`${this.apiUrl}/${id}`);
   }
@@ -96,5 +76,39 @@ export class ArticlesService {
 
   unlikeArticle(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}/like`);
+  }
+
+  getFeaturedArticles(): Observable<Article[]> {
+    return this.http.get<Article[]>(`${this.apiUrl}/featured`);
+  }
+
+  getRecentActivity(): Observable<Activity[]> {
+    return this.http.get<Activity[]>(`${this.apiUrl}/activity`);
+  }
+
+  getModerationStats(): Observable<ModerationStats> {
+    return this.http.get<ModerationStats>(`${this.apiUrl}/moderation/stats`);
+  }
+
+  getArticles(filters: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    category?: string;
+    author?: string;
+    search?: string;
+    sortBy?: string;
+  }): Observable<ArticlesResponse> {
+    let params = new HttpParams();
+
+    if (filters.page) params = params.set('page', filters.page.toString());
+    if (filters.limit) params = params.set('limit', filters.limit.toString());
+    if (filters.status) params = params.set('status', filters.status);
+    if (filters.category) params = params.set('category', filters.category);
+    if (filters.author) params = params.set('author', filters.author);
+    if (filters.search) params = params.set('search', filters.search);
+    if (filters.sortBy) params = params.set('sortBy', filters.sortBy);
+
+    return this.http.get<ArticlesResponse>(this.apiUrl, { params });
   }
 }

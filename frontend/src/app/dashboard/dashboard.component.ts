@@ -57,7 +57,7 @@ export class DashboardComponent implements OnInit {
     this.isLoading = true;
     
     // Charger les articles récents
-    this.articlesService.getArticles(1, 5).subscribe({
+    this.articlesService.getArticles({ page: 1, limit: 5 }).subscribe({
       next: (data) => {
         this.recentArticles = data.articles;
         this.calculateStats();

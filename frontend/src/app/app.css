@@ -131,18 +131,25 @@ button {
 .nav-link {
   color: white;
   text-decoration: none;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
   transition: all 0.3s ease;
-  font-weight: 500;
-  border: none;
-  background: transparent;
+  font-weight: 600;
+  border: 2px solid rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.1);
   cursor: pointer;
+  backdrop-filter: blur(10px);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
 }
 
 .nav-link:hover {
-  background: rgba(255,255,255,0.1);
-  transform: translateY(-1px);
+  background: rgba(255,255,255,0.2);
+  border-color: rgba(255,255,255,0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 .nav-link.btn-primary {
@@ -160,6 +167,119 @@ button {
 
 .nav-link.btn-logout:hover {
   background: var(--orange-red);
+}
+
+/* Styles pour les boutons d'authentification */
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: white;
+}
+
+.user-name {
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  background: rgba(255,255,255,0.1);
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+.logout-btn {
+  color: white;
+  padding: 0.5rem 1rem;
+  background: rgba(220, 53, 69, 0.8);
+  border: 1px solid rgba(220, 53, 69, 0.5);
+  border-radius: 6px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.logout-btn:hover {
+  background: rgba(220, 53, 69, 1);
+  transform: translateY(-1px);
+}
+
+.auth-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.btn {
+  padding: 0.75rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  border: 2px solid;
+}
+
+.btn-outline {
+  color: white;
+  background: transparent;
+  border-color: rgba(255,255,255,0.5);
+}
+
+.btn-outline:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: white;
+  transform: translateY(-2px);
+}
+
+.btn-primary {
+  background: var(--bright-blue);
+  color: white;
+  border-color: var(--bright-blue);
+}
+
+.btn-primary:hover {
+  background: var(--electric-violet);
+  border-color: var(--electric-violet);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* Styles pour le branding */
+.nav-brand {
+  display: flex;
+  align-items: center;
+}
+
+.brand-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: white;
+  text-decoration: none;
+  font-size: 1.25rem;
+  font-weight: 700;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+.brand-link:hover {
+  background: rgba(255,255,255,0.1);
+  transform: translateY(-1px);
+}
+
+.brand-icon {
+  font-size: 1.5rem;
+}
+
+.brand-text {
+  color: white;
 }
 
 .main-content {

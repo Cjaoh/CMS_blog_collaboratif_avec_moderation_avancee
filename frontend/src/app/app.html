@@ -1,27 +1,41 @@
 <!-- Navigation simple et fonctionnelle -->
 <header class="simple-header">
   <div class="header-content">
-    <div class="logo">
-      <h1>🍳 Blog Recettes</h1>
-    </div>
-    
-    <nav class="nav-menu">
-      <!-- Navigation pour tous -->
-      <a routerLink="/" class="nav-link">Accueil</a>
-      <a routerLink="/articles" class="nav-link">Articles</a>
-      
-      <!-- Navigation pour utilisateurs non connectés -->
-      <ng-container *ngIf="!authService.isAuthenticated">
-        <a routerLink="/login" class="nav-link">Connexion</a>
-        <a routerLink="/register" class="nav-link btn-primary">S'inscrire</a>
-      </ng-container>
-      
-      <!-- Navigation pour utilisateurs connectés -->
-      <ng-container *ngIf="authService.isAuthenticated">
-        <a routerLink="/dashboard" class="nav-link">Dashboard</a>
-        <a routerLink="/articles/new" class="nav-link" *ngIf="authService.isAuthor">Nouvel Article</a>
-        <button (click)="logout()" class="nav-link btn-logout">Déconnexion</button>
-      </ng-container>
+    <nav class="navbar" *ngIf="authService.isAuthenticated || !authService.isAuthenticated">
+      <div class="nav-container">
+        <div class="nav-brand">
+          <a routerLink="/" class="brand-link">
+            <span class="brand-icon">🍳</span>
+            <span class="brand-text">Cuisine Collaborative</span>
+          </a>
+        </div>
+        
+        <ul class="nav-menu">
+          <li class="nav-item">
+            <a routerLink="/" class="nav-link">🏠 Accueil</a>
+          </li>
+          <li class="nav-item">
+            <a routerLink="/articles" class="nav-link">📝 Articles</a>
+          </li>
+          <li class="nav-item" *ngIf="authService.isAuthor">
+            <a routerLink="/articles/new" class="nav-link">✍️ Écrire</a>
+          </li>
+          <li class="nav-item" *ngIf="authService.isAdmin">
+            <a routerLink="/admin" class="nav-link">⚙️ Admin</a>
+          </li>
+        </ul>
+        
+        <div class="nav-actions">
+          <div *ngIf="authService.isAuthenticated" class="user-menu">
+            <span class="user-name">👤 {{ authService.currentUser?.firstName }}</span>
+            <button (click)="logout()" class="logout-btn">🚪 Déconnexion</button>
+          </div>
+          <div *ngIf="!authService.isAuthenticated" class="auth-buttons">
+            <a routerLink="/login" class="btn btn-outline">Connexion</a>
+            <a routerLink="/register" class="btn btn-primary">Inscription</a>
+          </div>
+        </div>
+      </div>
     </nav>
   </div>
 </header>
