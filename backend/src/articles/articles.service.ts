@@ -1,271 +1,298 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { Article, ArticleStatus, ArticleFeatureStatus } from './schemas/article.schema';
+import { Model, Types } from 'mongoose';
+import { Article, ArticleStatus, ArticleDocument } from './schemas/article.schema';
 import { CreateArticleDto } from './dto/create-article.dto';
 import { UpdateArticleDto } from './dto/update-article.dto';
+import { CreateRecipeDto } from './dto/create-recipe.dto';
 import { slugify } from '../shared/utils/slug.util';
+import { PaginationHelper, PaginationResult } from '../common/helpers/pagination.helper';
+import { UserRole } from '../users/schemas/user.schema';
 
 @Injectable()
 export class ArticlesService {
-  constructor(@InjectModel('Article') private articleModel: Model<Article>) {}
+  constructor(@InjectModel('Article') private articleModel: Model<ArticleDocument>) {}
 
-  async create(createArticleDto: CreateArticleDto, authorId: string): Promise<Article> {
-    const slug = await this.generateUniqueSlug(createArticleDto.title);
-    
-    const article = new this.articleModel({
-      ...createArticleDto,
+  // ================= CREATE =================
+
+  async create(dto: CreateArticleDto, authorId: string) {
+    const slug = await this.generateUniqueSlug(dto.title);
+
+    return this.articleModel.create({
+      ...dto,
       slug,
-      author: authorId,
-      searchVector: this.generateSearchVector(createArticleDto.title, createArticleDto.excerpt, createArticleDto.content),
+      author: new Types.ObjectId(authorId),
+      status: ArticleStatus.DRAFT,
+      likes: [],
+      viewsCount: 0,
     });
-
-    const savedArticle = await article.save();
-    
-    // Incrémenter le compteur d'articles de l'auteur
-    // Note: Ceci nécessite d'injecter UsersService ou d'utiliser un événement
-    
-    return savedArticle;
   }
 
-  async findAll(
-    page = 1,
-    limit = 10,
-    status = ArticleStatus.PUBLISHED,
-    category?: string,
-    author?: string,
-  ): Promise<{ articles: Article[]; total: number; pages: number }> {
+  async createRecipe(dto: CreateRecipeDto, authorId: string) {
+    const slug = await this.generateUniqueSlug(dto.title);
+
+    return this.articleModel.create({
+      ...dto,
+      slug,
+      author: new Types.ObjectId(authorId),
+      status: ArticleStatus.DRAFT,
+      likes: [],
+      viewsCount: 0,
+    });
+  }
+
+  // ================= READ =================
+
+  async findAll(page = 1, limit = 10, status = ArticleStatus.PUBLISHED, category?: string, author?: string) {
     const query: any = { status };
     
     if (category) {
-      query.categories = { $in: [category] };
+      query.category = new Types.ObjectId(category);
     }
     
     if (author) {
-      query.author = author;
+      query.author = new Types.ObjectId(author);
     }
 
-    const skip = (page - 1) * limit;
+    const { skip, limit: queryLimit } = PaginationHelper.createQuery(page, limit);
 
-    const [articles, total] = await Promise.all([
-      this.articleModel
-        .find(query)
-        .populate('author', 'firstName lastName avatar')
-        .populate('categories', 'name slug')
-        .sort({ publishedAt: -1, createdAt: -1 })
+    const [data, total] = await Promise.all([
+      this.articleModel.find(query)
+        .populate('author', 'name')
+        .sort({ createdAt: -1 })
         .skip(skip)
-        .limit(limit)
-        .exec(),
+        .limit(queryLimit),
       this.articleModel.countDocuments(query),
     ]);
 
+    return PaginationHelper.createPaginationResult(data, total, page, limit);
+  }
+
+  async findOne(id: string) {
+    const article = await this.articleModel.findById(id).populate('author');
+    if (!article) throw new NotFoundException();
+    return article;
+  }
+
+  async findBySlug(slug: string) {
+    const article = await this.articleModel.findOne({ slug }).populate('author');
+    if (!article) throw new NotFoundException();
+    return article;
+  }
+
+  // ================= EXTRA METHODS (A FIX) =================
+
+  async searchRecipes(
+    ingredients?: string[],
+    maxCookingTime?: number,
+    maxPrepTime?: number,
+    servings?: number,
+    page = 1,
+    limit = 10
+  ) {
+    const query: any = { status: ArticleStatus.PUBLISHED };
+    
+    if (ingredients && ingredients.length > 0) {
+      query.ingredients = { $all: ingredients };
+    }
+    
+    if (maxCookingTime) {
+      query.cookingTimeMinutes = { $lte: maxCookingTime };
+    }
+    
+    if (maxPrepTime) {
+      query.prepTimeMinutes = { $lte: maxPrepTime };
+    }
+    
+    if (servings) {
+      query.servings = servings;
+    }
+    
+    return this.paginateQuery(query, page, limit);
+  }
+
+  async getRecipesByIngredients(ingredients: string[], page = 1, limit = 10) {
+    const query = {
+      status: ArticleStatus.PUBLISHED,
+      ingredients: { $all: ingredients },
+    };
+
+    return this.paginateQuery(query, page, limit);
+  }
+
+  async getRecipesByCookingTime(maxMinutes: number, page = 1, limit = 10) {
+    const query = {
+      status: ArticleStatus.PUBLISHED,
+      cookingTimeMinutes: { $lte: maxMinutes },
+    };
+
+    return this.paginateQuery(query, page, limit);
+  }
+
+  async getFeaturedArticles() {
+    return this.articleModel.find({ status: ArticleStatus.PUBLISHED })
+      .populate('author', 'name')
+      .sort({ viewsCount: -1 })
+      .limit(5);
+  }
+
+  async getRecentActivity() {
+    return this.articleModel.find()
+      .populate('author', 'name')
+      .sort({ updatedAt: -1 })
+      .limit(10);
+  }
+
+  async getModerationStats() {
     return {
-      articles,
-      total,
-      pages: Math.ceil(total / limit),
+      pending: await this.articleModel.countDocuments({ status: ArticleStatus.PENDING }),
+      rejected: await this.articleModel.countDocuments({ status: ArticleStatus.REJECTED }),
     };
   }
 
-  async findOne(id: string): Promise<Article> {
-    const article = await this.articleModel
-      .findById(id)
-      .populate('author', 'firstName lastName avatar bio')
-      .populate('editor', 'firstName lastName')
-      .populate('categories', 'name slug description')
-      .exec();
-
-    if (!article) {
-      throw new NotFoundException('Article not found');
-    }
-
-    return article;
+  async getPublicStats() {
+    return {
+      published: await this.articleModel.countDocuments({ status: ArticleStatus.PUBLISHED }),
+      pending: await this.articleModel.countDocuments({ status: ArticleStatus.PENDING }),
+      rejected: await this.articleModel.countDocuments({ status: ArticleStatus.REJECTED }),
+      total: await this.articleModel.countDocuments(),
+    };
   }
 
-  async findBySlug(slug: string): Promise<Article> {
-    const article = await this.articleModel
-      .findOne({ slug })
-      .populate('author', 'firstName lastName avatar bio')
-      .populate('editor', 'firstName lastName')
-      .populate('categories', 'name slug description')
-      .exec();
-
-    if (!article) {
-      throw new NotFoundException('Article not found');
-    }
-
-    return article;
+  async getPendingArticles(page = 1, limit = 10) {
+    return this.paginateQuery({ status: ArticleStatus.PENDING }, page, limit);
   }
 
-  async update(id: string, updateArticleDto: UpdateArticleDto, userId: string, userRole: string): Promise<Article> {
+  async incrementViews(id: string) {
+    return this.articleModel.findByIdAndUpdate(id, {
+      $inc: { viewsCount: 1 },
+    }, { new: true });
+  }
+
+  async toggleLike(id: string, userId: string) {
     const article = await this.articleModel.findById(id);
-    if (!article) {
-      throw new NotFoundException('Article not found');
+    if (!article) throw new NotFoundException();
+    
+    const userObjectId = new Types.ObjectId(userId);
+    const isLiked = article.likes.includes(userObjectId);
+    
+    if (isLiked) {
+      article.likes = article.likes.filter(like => !like.equals(userObjectId));
+    } else {
+      article.likes.push(userObjectId);
     }
-
-    // Vérifier les permissions
-    this.checkUpdatePermission(article, userId, userRole);
-
-    const updateData: any = { ...updateArticleDto };
-
-    if (updateArticleDto.title) {
-      updateData.slug = await this.generateUniqueSlug(updateArticleDto.title, id);
-    }
-
-    if (updateArticleDto.title || updateArticleDto.excerpt || updateArticleDto.content) {
-      const current = article.toObject();
-      updateData.searchVector = this.generateSearchVector(
-        updateArticleDto.title || current.title,
-        updateArticleDto.excerpt || current.excerpt,
-        updateArticleDto.content || current.content,
-      );
-    }
-
-    const updatedArticle = await this.articleModel
-      .findByIdAndUpdate(id, updateData, { new: true })
-      .populate('author', 'firstName lastName avatar')
-      .populate('categories', 'name slug')
-      .exec();
-
-    if (!updatedArticle) {
-      throw new NotFoundException('Article not found');
-    }
-
-    return updatedArticle;
+    
+    return article.save();
   }
 
-  async remove(id: string, userId: string, userRole: string): Promise<void> {
+  async submitForReview(id: string, userId: string) {
     const article = await this.articleModel.findById(id);
-    if (!article) {
-      throw new NotFoundException('Article not found');
+    if (!article) throw new NotFoundException();
+    
+    if (article.author.toString() !== userId) {
+      throw new ForbiddenException();
     }
+    
+    return this.articleModel.findByIdAndUpdate(id, {
+      status: ArticleStatus.PENDING,
+    }, { new: true });
+  }
 
-    // Vérifier les permissions
-    this.checkDeletePermission(article, userId, userRole);
+  async approveArticle(id: string) {
+    const article = await this.articleModel.findById(id);
+    if (!article) throw new NotFoundException();
+    
+    return this.articleModel.findByIdAndUpdate(id, {
+      status: ArticleStatus.PUBLISHED,
+    }, { new: true });
+  }
+
+  async rejectArticle(id: string, reason?: string) {
+    const article = await this.articleModel.findById(id);
+    if (!article) throw new NotFoundException();
+    
+    const updateData: any = {
+      status: ArticleStatus.REJECTED,
+    };
+    
+    if (reason) {
+      updateData.rejectionReason = reason;
+    }
+    
+    return this.articleModel.findByIdAndUpdate(id, updateData, { new: true });
+  }
+
+  // ================= SEARCH =================
+
+  async search(query: string, page = 1, limit = 10) {
+    const regex = new RegExp(query, 'i');
+
+    return this.paginateQuery({
+      status: ArticleStatus.PUBLISHED,
+      $or: [{ title: regex }, { content: regex }],
+    }, page, limit);
+  }
+
+  // ================= UPDATE =================
+
+  async update(id: string, dto: UpdateArticleDto, userId: string, role: string) {
+    const article = await this.articleModel.findById(id);
+    if (!article) throw new NotFoundException();
+
+    this.checkUpdatePermission(article, userId, role);
+
+    return this.articleModel.findByIdAndUpdate(id, dto, { new: true });
+  }
+
+  // ================= DELETE =================
+
+  async remove(id: string, userId: string, role: string) {
+    const article = await this.articleModel.findById(id);
+    if (!article) throw new NotFoundException();
+
+    this.checkDeletePermission(article, userId, role);
 
     await this.articleModel.findByIdAndDelete(id);
   }
 
-  async incrementViews(id: string): Promise<void> {
-    await this.articleModel.findByIdAndUpdate(id, { $inc: { viewsCount: 1 } });
-  }
+  // ================= UTILS =================
 
-  async incrementLikes(id: string): Promise<void> {
-    await this.articleModel.findByIdAndUpdate(id, { $inc: { likesCount: 1 } });
-  }
+  private async paginateQuery(query: any, page: number, limit: number) {
+    const { skip, limit: queryLimit } = PaginationHelper.createQuery(page, limit);
 
-  async decrementLikes(id: string): Promise<void> {
-    await this.articleModel.findByIdAndUpdate(id, { $inc: { likesCount: -1 } });
-  }
-
-  async search(query: string, page = 1, limit = 10): Promise<{ articles: Article[]; total: number; pages: number }> {
-    const skip = (page - 1) * limit;
-
-    const searchQuery = {
-      $text: { $search: query },
-      status: ArticleStatus.PUBLISHED,
-    };
-
-    const [articles, total] = await Promise.all([
-      this.articleModel
-        .find(searchQuery, { score: { $meta: 'textScore' } })
-        .populate('author', 'firstName lastName avatar')
-        .populate('categories', 'name slug')
-        .sort({ score: { $meta: 'textScore' } })
-        .skip(skip)
-        .limit(limit)
-        .exec(),
-      this.articleModel.countDocuments(searchQuery),
+    const [data, total] = await Promise.all([
+      this.articleModel.find(query).skip(skip).limit(queryLimit),
+      this.articleModel.countDocuments(query),
     ]);
 
-    return {
-      articles,
-      total,
-      pages: Math.ceil(total / limit),
-    };
+    return PaginationHelper.createPaginationResult(data, total, page, limit);
   }
 
-  async getPendingArticles(page = 1, limit = 10): Promise<{ articles: Article[]; total: number; pages: number }> {
-    return this.findAll(page, limit, ArticleStatus.PENDING);
-  }
-
-  async approveArticle(id: string, editorId: string): Promise<Article> {
-    const article = await this.articleModel.findByIdAndUpdate(
-      id,
-      {
-        status: ArticleStatus.PUBLISHED,
-        editor: editorId,
-        publishedAt: new Date(),
-        rejectionReason: undefined,
-      },
-      { new: true },
-    );
-    if (!article) {
-      throw new NotFoundException('Article not found');
-    }
-    return article;
-  }
-
-  async rejectArticle(id: string, editorId: string, reason: string): Promise<Article> {
-    const article = await this.articleModel.findByIdAndUpdate(
-      id,
-      {
-        status: ArticleStatus.REJECTED,
-        editor: editorId,
-        rejectionReason: reason,
-      },
-      { new: true },
-    );
-    if (!article) {
-      throw new NotFoundException('Article not found');
-    }
-    return article;
-  }
-
-  private async generateUniqueSlug(title: string, excludeId?: string): Promise<string> {
+  private async generateUniqueSlug(title: string, excludeId?: string) {
     let slug = slugify(title);
-    let counter = 1;
-    let originalSlug = slug;
+    let i = 1;
 
-    while (true) {
-      const query: any = { slug };
-      if (excludeId) {
-        query._id = { $ne: excludeId };
-      }
-
-      const existing = await this.articleModel.findOne(query);
-      if (!existing) {
-        return slug;
-      }
-
-      slug = `${originalSlug}-${counter}`;
-      counter++;
+    while (await this.articleModel.findOne({ slug })) {
+      slug = `${slug}-${i++}`;
     }
+
+    return slug;
   }
 
-  private generateSearchVector(title: string, excerpt: string, content: string): string {
-    return `${title} ${excerpt} ${content}`.toLowerCase();
+  private checkUpdatePermission(article: ArticleDocument, userId: string, role: string) {
+    if (role === UserRole.ADMIN) return;
+    if (article.author.toString() === userId) return;
+    throw new ForbiddenException();
   }
 
-  private checkUpdatePermission(article: Article, userId: string, userRole: string): void {
-    const isAdmin = userRole === 'admin';
-    const isEditor = userRole === 'editor';
-    const isAuthor = article.author.toString() === userId;
-
-    if (!isAdmin && !isEditor && !isAuthor) {
-      throw new ForbiddenException('You can only edit your own articles');
-    }
-
-    if (isAuthor && article.status !== ArticleStatus.DRAFT) {
-      throw new ForbiddenException('You can only edit your draft articles');
-    }
-  }
-
-  private checkDeletePermission(article: Article, userId: string, userRole: string): void {
-    const isAdmin = userRole === 'admin';
-    const isAuthor = article.author.toString() === userId;
-
-    if (!isAdmin && !isAuthor) {
-      throw new ForbiddenException('You can only delete your own articles');
-    }
+  private checkDeletePermission(article: ArticleDocument, userId: string, role: string) {
+    if (role === UserRole.ADMIN) return;
+    if (article.author.toString() === userId) return;
+    throw new ForbiddenException();
   }
 }

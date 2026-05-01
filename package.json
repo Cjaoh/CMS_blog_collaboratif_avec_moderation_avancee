@@ -1,0 +1,25 @@
+{
+  "name": "cms-blog-collaboratif-avec-moderation-avancee",
+  "version": "1.0.0",
+  "description": "CMS Blog Collaboratif avec Modération Avancée",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node scripts/dev-server.js",
+    "dev:backend": "cd backend && npm run start:dev",
+    "dev:frontend": "cd frontend && npm start",
+    "setup": "npm run setup:backend && npm run setup:frontend",
+    "setup:backend": "cd backend && npm install",
+    "setup:frontend": "cd frontend && npm install",
+    "build": "npm run build:backend && npm run build:frontend",
+    "build:backend": "cd backend && npm run build",
+    "build:frontend": "cd frontend && npm run build",
+    "clean": "npm run clean:backend && npm run clean:frontend",
+    "clean:backend": "cd backend && rm -rf dist node_modules",
+    "clean:frontend": "cd frontend && rm -rf dist node_modules",
+    "kill-ports": "pkill -f 'npm.*start:dev' || true && pkill -f 'ng.*serve' || true",
+    "status": "echo 'Backend: http://localhost:3001/api' && echo 'Frontend: http://localhost:4200'"
+  },
+  "keywords": ["cms", "blog", "nestjs", "angular", "collaborative", "moderation"],
+  "author": "CMS Developer",
+  "license": "ISC"
+}

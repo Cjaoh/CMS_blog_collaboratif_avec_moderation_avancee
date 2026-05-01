@@ -1,114 +1,123 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, shareReplay } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { 
-  Article, 
-  CreateArticleDto, 
-  UpdateArticleDto, 
-  ArticlesResponse,
-  ArticleStatus,
-  ModerationStats,
-  Activity
-} from '../models/article.model';
+import { Article, CreateArticleDto, UpdateArticleDto, ArticlesResponse, ModerationStats, ModerationStatsResponse, Activity } from '../models/article.model';
+import { Category } from '../models/category.model';
 
-@Injectable({
-  providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 export class ArticlesService {
+  private http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/articles`;
-
-  constructor(private http: HttpClient) {}
-
+  private readonly categoriesUrl = `${environment.apiUrl}/categories`;
   
-  getArticle(id: string): Observable<Article> {
+  // Cache pour les catégories
+  private categoriesCache$?: Observable<Category[]>;
+
+  // =========================
+  // ARTICLES CRUD
+  // =========================
+
+  getArticles(filters: any = {}): Observable<ArticlesResponse> {
+    let params = new HttpParams();
+    Object.keys(filters).forEach(key => {
+      if (filters[key]) params = params.set(key, filters[key]);
+    });
+    return this.http.get<ArticlesResponse>(this.apiUrl, { params });
+  }
+
+  getArticleById(id: string): Observable<Article> {
     return this.http.get<Article>(`${this.apiUrl}/${id}`);
   }
 
-  getArticleBySlug(slug: string): Observable<Article> {
-    return this.http.get<Article>(`${this.apiUrl}/slug/${slug}`);
+  // Alias pour compatibilité
+  getArticle(id: string): Observable<Article> {
+    return this.getArticleById(id);
   }
 
-  createArticle(articleData: CreateArticleDto): Observable<Article> {
-    return this.http.post<Article>(this.apiUrl, articleData);
+  createArticle(data: CreateArticleDto): Observable<Article> {
+    return this.http.post<Article>(this.apiUrl, data);
   }
 
-  updateArticle(id: string, articleData: UpdateArticleDto): Observable<Article> {
-    return this.http.patch<Article>(`${this.apiUrl}/${id}`, articleData);
+  updateArticle(id: string, data: UpdateArticleDto): Observable<Article> {
+    return this.http.patch<Article>(`${this.apiUrl}/${id}`, data);
   }
 
   deleteArticle(id: string): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
-  searchArticles(query: string, page = 1, limit = 10): Observable<ArticlesResponse> {
-    const params = new HttpParams()
-      .set('q', query)
-      .set('page', page.toString())
-      .set('limit', limit.toString());
-
-    return this.http.get<ArticlesResponse>(`${this.apiUrl}/search`, { params });
-  }
-
-  getPendingArticles(page = 1, limit = 10): Observable<ArticlesResponse> {
-    const params = new HttpParams()
-      .set('page', page.toString())
-      .set('limit', limit.toString());
-
-    return this.http.get<ArticlesResponse>(`${this.apiUrl}/pending`, { params });
-  }
-
-  approveArticle(id: string): Observable<Article> {
-    return this.http.patch<Article>(`${this.apiUrl}/${id}/approve`, {});
-  }
-
-  rejectArticle(id: string, reason: string): Observable<Article> {
-    return this.http.patch<Article>(`${this.apiUrl}/${id}/reject`, { reason });
-  }
-
-  incrementViews(id: string): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/${id}/views`, {});
-  }
-
-  likeArticle(id: string): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/${id}/like`, {});
-  }
-
-  unlikeArticle(id: string): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}/like`);
-  }
+  // =========================
+  // ENDPOINTS SPÉCIFIQUES
+  // =========================
 
   getFeaturedArticles(): Observable<Article[]> {
     return this.http.get<Article[]>(`${this.apiUrl}/featured`);
   }
 
-  getRecentActivity(): Observable<Activity[]> {
+  getLatestActivity(): Observable<Activity[]> {
     return this.http.get<Activity[]>(`${this.apiUrl}/activity`);
   }
 
-  getModerationStats(): Observable<ModerationStats> {
-    return this.http.get<ModerationStats>(`${this.apiUrl}/moderation/stats`);
+  getModerationStats(): Observable<ModerationStatsResponse> {
+    return this.http.get<ModerationStatsResponse>(`${this.apiUrl}/public/stats`);
   }
 
-  getArticles(filters: {
-    page?: number;
-    limit?: number;
-    status?: string;
-    category?: string;
-    author?: string;
-    search?: string;
-    sortBy?: string;
-  }): Observable<ArticlesResponse> {
+  incrementViews(id: string): Observable<Article> {
+    return this.http.patch<Article>(`${this.apiUrl}/${id}/views`, {});
+  }
+
+  toggleLike(id: string): Observable<Article> {
+    return this.http.post<Article>(`${this.apiUrl}/${id}/like`, {});
+  }
+
+  // Alias pour compatibilité
+  likeArticle(id: string): Observable<Article> {
+    return this.toggleLike(id);
+  }
+
+  // =========================
+  // CATÉGORIES
+  // =========================
+
+  getCategories(): Observable<Category[]> {
+    // Utilisation du cache avec shareReplay(1)
+    if (!this.categoriesCache$) {
+      this.categoriesCache$ = this.http.get<Category[]>(this.categoriesUrl).pipe(
+        shareReplay(1)
+      );
+    }
+    return this.categoriesCache$;
+  }
+
+  // =========================
+  // RECETTES (si utilisé)
+  // =========================
+
+  searchRecipes(filters: any = {}): Observable<any> {
     let params = new HttpParams();
+    Object.keys(filters).forEach(key => {
+      if (filters[key]) params = params.set(key, filters[key]);
+    });
+    return this.http.get<any>(`${this.apiUrl}/recipes/search`, { params });
+  }
 
-    if (filters.page) params = params.set('page', filters.page.toString());
-    if (filters.limit) params = params.set('limit', filters.limit.toString());
-    if (filters.status) params = params.set('status', filters.status);
-    if (filters.category) params = params.set('category', filters.category);
-    if (filters.author) params = params.set('author', filters.author);
-    if (filters.search) params = params.set('search', filters.search);
-    if (filters.sortBy) params = params.set('sortBy', filters.sortBy);
+  getRecipesByIngredients(ingredients: string[]): Observable<any> {
+    const params = new HttpParams().set('ingredients', ingredients.join(','));
+    return this.http.get<any>(`${this.apiUrl}/recipes/by-ingredients`, { params });
+  }
 
-    return this.http.get<ArticlesResponse>(this.apiUrl, { params });
+  getRecipesByCookingTime(maxMinutes: number): Observable<any> {
+    const params = new HttpParams().set('maxMinutes', maxMinutes.toString());
+    return this.http.get<any>(`${this.apiUrl}/recipes/by-cooking-time`, { params });
+  }
+
+  // =========================
+  // UTILITAIRE
+  // =========================
+
+  // Invalider le cache des catégories si nécessaire
+  clearCategoriesCache(): void {
+    this.categoriesCache$ = undefined;
   }
 }

@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsUUID } from 'class-validator';
+import { IsString, IsOptional, IsMongoId } from 'class-validator';
 import { MinLength, MaxLength } from 'class-validator';
 
 export class CreateCommentDto {
@@ -7,10 +7,10 @@ export class CreateCommentDto {
   @MaxLength(2000)
   content: string;
 
-  @IsUUID()
+  @IsMongoId()
   article: string;
 
   @IsOptional()
-  @IsUUID()
+  @IsMongoId()
   parent?: string;
 }

@@ -1,4 +1,5 @@
 // VARIABLES COULEURS ROYALES
+@use 'sass:color';
 $purple-deep: #0f0221;
 $purple-mid: #2d1060;
 $purple-light: #5b1090;
@@ -362,7 +363,7 @@ $border-radius-card: 12px;
         align-items: center;
         justify-content: center;
         font-size: 48px;
-        background: linear-gradient(135deg, var(--category-color, $purple-ui), var(--category-color-light, lighten($purple-ui, 20%)));
+        background: linear-gradient(135deg, var(--category-color, $purple-ui), var(--category-color-light, color.adjust($purple-ui, $lightness: +20%)));
 
         &.entrées {
           --category-color: #10b981;
@@ -546,6 +547,147 @@ $border-radius-card: 12px;
 }
 
 // SKELETON LOADING
+.skeleton-loader {
+  padding: 40px 0;
+
+  .skeleton-hero,
+  .skeleton-activity,
+  .skeleton-featured {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: $border-radius-card;
+    margin-bottom: 24px;
+  }
+
+  .skeleton-hero {
+    height: 400px;
+    
+    .skeleton-title {
+      width: 60%;
+      height: 48px;
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: loading 1.5s infinite;
+      border-radius: 8px;
+      margin: 0 auto 16px;
+    }
+    
+    .skeleton-subtitle {
+      width: 40%;
+      height: 20px;
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: loading 1.5s infinite;
+      border-radius: 4px;
+      margin: 0 auto 24px;
+    }
+    
+    .skeleton-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      
+      &::before,
+      &::after {
+        content: '';
+        width: 120px;
+        height: 40px;
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+        border-radius: 8px;
+      }
+    }
+  }
+
+  .skeleton-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 24px;
+    max-width: 800px;
+    margin: 60px auto 0;
+    padding: 0 20px;
+
+    .skeleton-stat {
+      height: 80px;
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: loading 1.5s infinite;
+      border-radius: 8px;
+    }
+  }
+
+  .skeleton-activity {
+    height: 300px;
+    
+    .skeleton-activity-header {
+      width: 30%;
+      height: 24px;
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: loading 1.5s infinite;
+      border-radius: 4px;
+      margin-bottom: 24px;
+    }
+    
+    .skeleton-activity-items {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      
+      .skeleton-activity-item {
+        height: 60px;
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+        border-radius: 8px;
+      }
+    }
+  }
+
+  .skeleton-featured {
+    height: 400px;
+    
+    .skeleton-featured-header {
+      width: 40%;
+      height: 32px;
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+      background-size: 200% 100%;
+      animation: loading 1.5s infinite;
+      border-radius: 4px;
+      margin-bottom: 32px;
+    }
+    
+    .skeleton-featured-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+      
+      .skeleton-featured-card {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+        border-radius: $border-radius-card;
+        
+        &.skeleton-large {
+          height: 300px;
+        }
+        
+        &:not(.skeleton-large) {
+          height: 140px;
+        }
+      }
+      
+      .skeleton-featured-small {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+    }
+  }
+}
+
 .skeleton-container {
   padding: 40px 0;
 

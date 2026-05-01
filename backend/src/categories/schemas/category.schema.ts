@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { HydratedDocument } from 'mongoose';
 
 export enum CategoryStatus {
   ACTIVE = 'active',
@@ -7,7 +7,7 @@ export enum CategoryStatus {
 }
 
 @Schema({ timestamps: true })
-export class Category extends Document {
+export class Category {
   @Prop({ required: true, unique: true })
   name: string;
 
@@ -17,35 +17,35 @@ export class Category extends Document {
   @Prop()
   description?: string;
 
-  @Prop()
-  parent?: string; // Référence à une catégorie parente
+  @Prop({ type: String, ref: 'Category' })
+  parent?: string;
 
-  @Prop([String])
-  children: string[]; // Références aux catégories enfants
+  @Prop({ type: [String], ref: 'Category' })
+  children: string[] = [];
 
   @Prop({ required: true, enum: CategoryStatus, default: CategoryStatus.ACTIVE })
-  status: CategoryStatus;
+  status: CategoryStatus = CategoryStatus.ACTIVE;
+
+  @Prop()
+  imageUrl?: string;
 
   @Prop({ default: 0 })
-  articlesCount: number;
+  articlesCount: number = 0;
+
+  @Prop({ default: 0 })
+  sortOrder: number = 0;
 
   @Prop()
   metaTitle?: string;
 
   @Prop()
   metaDescription?: string;
-
-  @Prop()
-  imageUrl?: string;
-
-  @Prop({ default: 0 })
-  sortOrder: number;
 }
 
 export const CategorySchema = SchemaFactory.createForClass(Category);
+export type CategoryDocument = HydratedDocument<Category>;
 
 // Index pour optimiser les recherches
-CategorySchema.index({ slug: 1 });
+CategorySchema.index({ slug: 1 }, { unique: true });
 CategorySchema.index({ parent: 1 });
 CategorySchema.index({ status: 1 });
-CategorySchema.index({ sortOrder: 1 });

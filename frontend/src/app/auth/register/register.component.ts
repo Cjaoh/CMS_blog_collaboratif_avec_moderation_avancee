@@ -33,6 +33,15 @@ export class RegisterComponent {
   private router = inject(Router);
   private fb = inject(FormBuilder);
 
+  specialtiesList = [
+    'Cuisine française',
+    'Pâtisserie',
+    'Cuisine italienne',
+    'Cuisine végétarienne',
+    'Plats rapides',
+    'Cuisine asiatique'
+  ];
+
   registerForm = this.fb.group({
     firstName: ['', Validators.required],
     lastName: ['', Validators.required],
@@ -45,6 +54,30 @@ export class RegisterComponent {
   hidePassword = true;
   isLoading = false;
   errorMessage = '';
+
+  get specialties() {
+    return this.registerForm.get('specialties') as FormArray;
+  }
+
+  onSpecialtyChange(specialty: string, event: any) {
+    const specialtiesArray = this.specialties;
+    if (event.checked) {
+      specialtiesArray.push(this.fb.control(specialty));
+    } else {
+      const index = specialtiesArray.controls.findIndex(
+        control => control.value === specialty
+      );
+      if (index >= 0) {
+        specialtiesArray.removeAt(index);
+      }
+    }
+  }
+
+  isSpecialtySelected(specialty: string): boolean {
+    return this.specialties.controls.some(
+      control => control.value === specialty
+    );
+  }
 
   onSubmit(): void {
     if (this.registerForm.valid) {

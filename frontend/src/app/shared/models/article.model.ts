@@ -89,6 +89,13 @@ export interface ModerationStats {
   total: number;
 }
 
+export interface ModerationStatsResponse {
+  data: ModerationStats;
+  meta: {
+    total: number;
+  };
+}
+
 export interface Activity {
   type: 'submitted' | 'approved' | 'rejected' | 'commented';
   user: {

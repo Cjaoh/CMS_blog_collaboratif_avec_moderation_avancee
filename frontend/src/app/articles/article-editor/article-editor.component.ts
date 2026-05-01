@@ -58,7 +58,7 @@ export class ArticleEditorComponent {
 
   loadArticle(id: string): void {
     this.articlesService.getArticle(id).subscribe({
-      next: (article) => {
+      next: (article: Article) => {
         this.articleForm.patchValue({
           title: article.title,
           excerpt: article.excerpt,
@@ -67,7 +67,7 @@ export class ArticleEditorComponent {
           status: article.status,
         });
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Error loading article:', err);
       }
     });
@@ -94,7 +94,7 @@ export class ArticleEditorComponent {
         next: () => {
           this.router.navigate(['/articles']);
         },
-        error: (err) => {
+        error: (err: any) => {
           console.error('Error saving article:', err);
           this.isLoading = false;
         },

@@ -1,4 +1,5 @@
 // VARIABLES COULEURS ROYALES
+@use 'sass:color';
 $purple-deep: #0f0221;
 $purple-mid: #2d1060;
 $purple-light: #5b1090;
@@ -376,7 +377,7 @@ $white: #ffffff;
           color: $white;
 
           &:hover {
-            background: darken($purple-ui, 10%);
+            background: color.adjust($purple-ui, $lightness: -10%);
             transform: translateY(-1px);
           }
         }
@@ -501,7 +502,7 @@ $white: #ffffff;
         width: 60px;
         height: 60px;
         border-radius: 50%;
-        background: linear-gradient(135deg, $gold, darken($gold, 20%));
+        background: linear-gradient(135deg, $gold, color.adjust($gold, $lightness: -20%));
         color: $purple-deep;
         display: flex;
         align-items: center;

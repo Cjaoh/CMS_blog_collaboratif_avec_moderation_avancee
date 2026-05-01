@@ -88,15 +88,12 @@ export class AuthService {
         secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
       });
 
-      const user = await this.usersService.findOne(payload.userId);
-      if (!user || user.refreshToken !== refreshToken) {
-        throw new UnauthorizedException('Invalid refresh token');
+      const user = await this.usersService.findOne(payload.sub);
+      if (!user) {
+        throw new UnauthorizedException('User not found');
       }
 
       const tokens = await this.generateTokens(user);
-      
-      // Mettre à jour le refresh token
-      await this.usersService.update((user as any)._id.toString(), { refreshToken: tokens.refreshToken });
 
       return {
         ...tokens,
@@ -113,7 +110,7 @@ export class AuthService {
 
   private async generateTokens(user: Omit<User, 'password'>) {
     const payload = {
-      sub: user._id.toString(),
+      sub: (user as any)._id.toString(),
       email: user.email,
       role: user.role,
     };

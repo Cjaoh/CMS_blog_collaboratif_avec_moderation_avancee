@@ -1,4 +1,5 @@
 // VARIABLES COULEURS ROYALES
+@use 'sass:color';
 $purple-deep: #0f0221;
 $purple-mid: #2d1060;
 $purple-light: #5b1090;
@@ -410,7 +411,7 @@ $border-radius-card: 12px;
           align-items: center;
           justify-content: center;
           font-size: 48px;
-          background: linear-gradient(135deg, var(--category-color, $purple-ui), var(--category-color-light, lighten($purple-ui, 20%)));
+          background: linear-gradient(135deg, var(--category-color, $purple-ui), var(--category-color-light, color.adjust($purple-ui, $lightness: +20%)));
 
           &.entrées {
             --category-color: #10b981;
@@ -695,11 +696,11 @@ $border-radius-card: 12px;
           color: white;
 
           &.Expert {
-            background: linear-gradient(135deg, $gold, darken($gold, 20%));
+            background: linear-gradient(135deg, $gold, color.adjust($gold, $lightness: -20%));
           }
 
           &.Avancé {
-            background: linear-gradient(135deg, $purple-ui, lighten($purple-ui, 20%));
+            background: linear-gradient(135deg, $purple-ui, color.adjust($purple-ui, $lightness: +20%));
           }
 
           &.Intermédiaire {

@@ -3,15 +3,14 @@ import { ArticlesService } from '../../shared/services/articles.service';
 import { CategoriesService } from '../../shared/services/categories.service';
 import { AuthService } from '../../shared/services/auth.service';
 import { UserService } from '../../shared/services/user.service';
-import { Article, ArticleStatus, ModerationStats } from '../../shared/models/article.model';
+import { Article, ArticleStatus, ModerationStats, ModerationStatsResponse } from '../../shared/models/article.model';
 import { Category } from '../../shared/models/category.model';
 import { ArticlesResponse } from '../../shared/models/article.model';
 import { User } from '../../shared/models/user.model';
 import { RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Subject, debounceTime, distinctUntilChanged, takeUntil, tap } from 'rxjs';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
 
 interface ArticleFilters {
   search: string;
@@ -32,7 +31,7 @@ interface ArticleFilters {
   templateUrl: './articles-list.component.html',
   styleUrls: ['./articles-list.component.scss']
 })
-export class ArticlesListComponent implements OnInit {
+export class ArticlesListComponent implements OnInit, OnDestroy {
   private articlesService = inject(ArticlesService);
   private categoriesService = inject(CategoriesService);
   private userService = inject(UserService);
@@ -65,6 +64,7 @@ export class ArticlesListComponent implements OnInit {
   };
 
   private searchSubject = new Subject<string>();
+  private destroy$ = new Subject<void>();
 
   ngOnInit(): void {
     this.initializeSearchDebouncer();
@@ -75,7 +75,7 @@ export class ArticlesListComponent implements OnInit {
     this.searchSubject.pipe(
       debounceTime(400),
       distinctUntilChanged(),
-      takeUntilDestroyed()
+      takeUntil(this.destroy$)
     ).subscribe(() => {
       this.currentPage = 1;
       this.loadArticles();
@@ -157,9 +157,9 @@ export class ArticlesListComponent implements OnInit {
 
   loadModerationStats(): void {
     this.articlesService.getModerationStats().subscribe({
-      next: (stats) => {
-        this.moderationStats = stats;
-        this.stats.pending = stats.pending;
+      next: (statsResponse: ModerationStatsResponse) => {
+        this.moderationStats = statsResponse.data;
+        this.stats.pending = statsResponse.data.pending;
       },
       error: (err) => {
         console.error('Error fetching moderation stats:', err);
@@ -478,5 +478,10 @@ export class ArticlesListComponent implements OnInit {
       rejected: 8,
       total: 176
     };
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 }

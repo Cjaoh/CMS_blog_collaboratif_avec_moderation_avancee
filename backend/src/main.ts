@@ -5,22 +5,26 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   
-  // Ajouter le préfixe global /api
+  // Préfixe global pour toutes les routes
   app.setGlobalPrefix('api');
   
-  // Activer la validation globale
+  // Validation des DTOs
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
     transform: true,
     forbidNonWhitelisted: true,
   }));
   
-  // Activer CORS pour le frontend
+  // Configuration CORS critique pour Angular
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:4200',
+    origin: ['http://localhost:4200'], // Port par défaut d'Angular
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
+    allowedHeaders: 'Content-Type, Accept, Authorization',
   });
   
-  await app.listen(process.env.PORT ?? 3001);
+  const port = process.env.PORT || 3001;
+  await app.listen(port);
+  console.log(`Application is running on: http://localhost:${port}/api`);
 }
 bootstrap();

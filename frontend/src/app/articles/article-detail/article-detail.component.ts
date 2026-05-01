@@ -1,5 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ArticlesService } from '../../shared/services/articles.service';
 import { CommentsService } from '../../shared/services/comments.service';
 import { AuthService } from '../../shared/services/auth.service';
@@ -35,6 +35,7 @@ import { FormsModule } from '@angular/forms';
 })
 export class ArticleDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private articlesService = inject(ArticlesService);
   private commentsService = inject(CommentsService);
   public authService = inject(AuthService);
@@ -46,47 +47,52 @@ export class ArticleDetailComponent implements OnInit {
 
   ngOnInit(): void {
     const articleId = this.route.snapshot.paramMap.get('id');
-    if (articleId) {
+    if (articleId && articleId !== 'new') {
       this.loadArticle(articleId);
       this.loadComments(articleId);
+    } else {
+      this.isLoading = false;
+      if (articleId === 'new') this.router.navigate(['/articles/new']);
     }
   }
 
   loadArticle(id: string): void {
     this.articlesService.getArticle(id).subscribe({
-      next: (article) => {
-        this.article = article;
+      next: (art: Article) => {
+        this.article = art;
         this.isLoading = false;
-        // Incrémenter les vues
         this.articlesService.incrementViews(id).subscribe();
       },
-      error: (err) => {
+      error: (err: any) => {
         console.error('Error loading article:', err);
         this.isLoading = false;
+        this.router.navigate(['/']);
       }
     });
   }
 
   loadComments(articleId: string): void {
     this.commentsService.getCommentsByArticle(articleId).subscribe({
-      next: (response) => {
-        this.comments = response.comments;
+      next: (response: any) => {
+        this.comments = response.comments || [];
       },
-      error: (err) => {
-        console.error('Error loading comments:', err);
-      }
+      error: (err: any) => console.error('Error loading comments:', err)
     });
   }
 
+  // --- FONCTIONS CORRIGÉES POUR LE HTML ---
+
   likeArticle(): void {
+    if (!this.authService.isAuthenticated) {
+      this.router.navigate(['/login']);
+      return;
+    }
     if (this.article) {
       this.articlesService.likeArticle(this.article._id).subscribe({
         next: () => {
-          if (this.article) {
-            this.article.likesCount++;
-          }
+          if (this.article) this.article.likesCount++;
         },
-        error: (err) => console.error('Error liking article:', err)
+        error: (err: any) => console.error('Error liking article:', err)
       });
     }
   }
@@ -100,89 +106,57 @@ export class ArticleDetailComponent implements OnInit {
           url: window.location.href
         });
       } else {
-        // Fallback: copier dans le presse-papiers
         navigator.clipboard.writeText(window.location.href);
+        alert('Lien copié !');
       }
     }
   }
 
   addComment(): void {
-    if (this.newComment.trim() && this.article && this.authService.currentUser) {
-      const commentData = {
+    if (!this.authService.isAuthenticated) {
+      this.router.navigate(['/login']);
+      return;
+    }
+    if (this.newComment.trim() && this.article) {
+      this.commentsService.createComment({
         content: this.newComment,
         article: this.article._id
-      };
-
-      this.commentsService.createComment(commentData).subscribe({
-        next: (comment) => {
+      }).subscribe({
+        next: (comment: Comment) => {
           this.comments.unshift(comment);
           this.newComment = '';
-          if (this.article) {
-            this.article.commentsCount++;
-          }
-        },
-        error: (err) => console.error('Error adding comment:', err)
+          if (this.article) this.article.commentsCount++;
+        }
       });
     }
   }
 
-  // Helper methods pour extraire le contenu
   getAuthorInitials(author: any): string {
     if (author?.firstName && author?.lastName) {
       return `${author.firstName[0]}${author.lastName[0]}`.toUpperCase();
     }
-    return '??';
+    return 'U';
+  }
+
+  private extractContent(html: string, keyword: string, tag: string): string {
+    if (!html) return '';
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const headers = Array.from(doc.querySelectorAll('h2'));
+    const target = headers.find(h => h.textContent?.toLowerCase().includes(keyword.toLowerCase()));
+    const sibling = target?.nextElementSibling;
+    return (sibling && sibling.tagName === tag.toUpperCase()) ? sibling.outerHTML : '';
   }
 
   extractIngredients(content: string): string {
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = content;
-    
-    const h2Elements = tempDiv.querySelectorAll('h2');
-    for (const h2 of h2Elements) {
-      if (h2.textContent?.toLowerCase().includes('ingrédients')) {
-        const ul = h2.nextElementSibling;
-        if (ul && ul.tagName === 'UL') {
-          return ul.outerHTML;
-        }
-      }
-    }
-    
-    return '<ul><li>Ingrédients non disponibles</li></ul>';
+    return this.extractContent(content, 'ingrédients', 'ul') || '<ul><li>Non spécifié</li></ul>';
   }
 
   extractPreparation(content: string): string {
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = content;
-    
-    const h2Elements = tempDiv.querySelectorAll('h2');
-    for (const h2 of h2Elements) {
-      if (h2.textContent?.toLowerCase().includes('préparation')) {
-        const ol = h2.nextElementSibling;
-        if (ol && ol.tagName === 'OL') {
-          return ol.outerHTML;
-        }
-      }
-    }
-    
-    return '<ol><li>Préparation non disponible</li></ol>';
+    return this.extractContent(content, 'préparation', 'ol') || '<ol><li>Non spécifié</li></ol>';
   }
 
   extractTiming(content: string): string {
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = content;
-    
-    const h2Elements = tempDiv.querySelectorAll('h2');
-    for (const h2 of h2Elements) {
-      if (h2.textContent?.toLowerCase().includes('temps')) {
-        const p = h2.nextElementSibling;
-        if (p && p.tagName === 'P') {
-          return p.outerHTML;
-        }
-      }
-    }
-    
-    return '';
+    return this.extractContent(content, 'temps', 'p');
   }
 
   printRecipe(): void {

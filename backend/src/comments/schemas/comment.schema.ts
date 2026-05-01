@@ -1,66 +1,51 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 
 export enum CommentStatus {
-  PENDING = 'pending',
-  APPROVED = 'approved',
-  REJECTED = 'rejected',
-  SPAM = 'spam'
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED',
+  SPAM = 'SPAM'
 }
 
 @Schema({ timestamps: true })
-export class Comment extends Document {
+export class Comment {
   @Prop({ required: true })
   content: string;
 
-  @Prop({ required: true, type: String, ref: 'User' })
-  author: string;
+  @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
+  author: Types.ObjectId;
 
-  @Prop({ required: true, type: String, ref: 'Article' })
-  article: string;
+  @Prop({ required: true, type: Types.ObjectId, ref: 'Article' })
+  article: Types.ObjectId;
 
-  @Prop({ type: String, ref: 'Comment' })
-  parent?: string; // Pour les réponses imbriquées
-
-  @Prop([String])
-  children: string[]; // Références aux réponses
+  @Prop({ type: Types.ObjectId, ref: 'Comment' })
+  parent?: Types.ObjectId;
 
   @Prop({ required: true, enum: CommentStatus, default: CommentStatus.PENDING })
   status: CommentStatus;
 
-  @Prop({ type: String, ref: 'User' })
-  moderatedBy?: string; // Éditeur qui a modéré le commentaire
+  @Prop({ type: Types.ObjectId, ref: 'User' })
+  moderatedBy?: Types.ObjectId;
 
   @Prop()
   moderationReason?: string;
 
-  @Prop({ default: 0 })
-  likesCount: number;
+  @Prop({ default: Date })
+  moderatedAt?: Date;
+
+  @Prop({ type: [Types.ObjectId], default: [] })
+  reportedBy?: Types.ObjectId[];
 
   @Prop({ default: 0 })
-  reportsCount: number;
+  reportsCount?: number;
 
-  @Prop([String])
-  reportedBy: string[]; // Utilisateurs ayant signalé le commentaire
-
-  @Prop({ default: false })
-  isEdited: boolean;
-
-  @Prop({ type: Date })
-  editedAt?: Date;
-
-  @Prop({ default: false })
-  isPinned: boolean;
-
-  // Informations pour l'analyse de spam
-  @Prop()
-  ipAddress?: string;
-
-  @Prop()
-  userAgent?: string;
+  @Prop({ default: 0 })
+  likesCount?: number;
 }
 
 export const CommentSchema = SchemaFactory.createForClass(Comment);
+export type CommentDocument = HydratedDocument<Comment>;
 
 // Index pour optimiser les recherches
 CommentSchema.index({ article: 1, status: 1 });
@@ -68,4 +53,3 @@ CommentSchema.index({ author: 1 });
 CommentSchema.index({ parent: 1 });
 CommentSchema.index({ status: 1 });
 CommentSchema.index({ createdAt: -1 });
-CommentSchema.index({ reportsCount: -1 });

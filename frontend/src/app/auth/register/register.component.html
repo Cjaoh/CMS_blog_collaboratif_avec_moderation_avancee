@@ -77,23 +77,12 @@
         <div class="specialties-section">
           <h3 class="section-title">Vos spécialités culinaires (optionnel)</h3>
           <div class="specialties-grid">
-            <mat-checkbox class="specialty-checkbox" formControlName="specialties">
-              Cuisine française
-            </mat-checkbox>
-            <mat-checkbox class="specialty-checkbox" formControlName="specialties">
-              Pâtisserie
-            </mat-checkbox>
-            <mat-checkbox class="specialty-checkbox" formControlName="specialties">
-              Cuisine italienne
-            </mat-checkbox>
-            <mat-checkbox class="specialty-checkbox" formControlName="specialties">
-              Cuisine végétarienne
-            </mat-checkbox>
-            <mat-checkbox class="specialty-checkbox" formControlName="specialties">
-              Plats rapides
-            </mat-checkbox>
-            <mat-checkbox class="specialty-checkbox" formControlName="specialties">
-              Cuisine asiatique
+            <mat-checkbox 
+              class="specialty-checkbox" 
+              *ngFor="let specialty of specialtiesList"
+              [checked]="isSpecialtySelected(specialty)"
+              (change)="onSpecialtyChange(specialty, $event)">
+              {{ specialty }}
             </mat-checkbox>
           </div>
         </div>

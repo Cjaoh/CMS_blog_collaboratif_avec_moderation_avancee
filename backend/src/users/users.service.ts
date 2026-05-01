@@ -1,14 +1,14 @@
 import { Injectable, ConflictException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { User, UserRole, UserStatus } from './schemas/user.schema';
+import { User, UserRole, UserStatus, UserDocument } from './schemas/user.schema';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
-  constructor(@InjectModel('User') private userModel: Model<User>) {}
+  constructor(@InjectModel('User') private userModel: Model<UserDocument>) {}
 
-  async create(createUserDto: any): Promise<User> {
+  async create(createUserDto: any): Promise<UserDocument> {
     const { email, password, firstName, lastName, role = UserRole.AUTHOR } = createUserDto;
 
     // Vérifier si l'email existe déjà
@@ -23,6 +23,7 @@ export class UsersService {
     const user = new this.userModel({
       email,
       password: hashedPassword,
+      name: `${firstName} ${lastName}`,
       firstName,
       lastName,
       role,
@@ -31,11 +32,11 @@ export class UsersService {
     return user.save();
   }
 
-  async findAll(): Promise<User[]> {
+  async findAll(): Promise<UserDocument[]> {
     return this.userModel.find().select('-password').exec();
   }
 
-  async findOne(id: string): Promise<User> {
+  async findOne(id: string): Promise<UserDocument> {
     const user = await this.userModel.findById(id).select('-password').exec();
     if (!user) {
       throw new NotFoundException('User not found');
@@ -43,11 +44,11 @@ export class UsersService {
     return user;
   }
 
-  async findByEmail(email: string): Promise<User | null> {
+  async findByEmail(email: string): Promise<UserDocument | null> {
     return this.userModel.findOne({ email }).exec();
   }
 
-  async update(id: string, updateUserDto: any): Promise<User> {
+  async update(id: string, updateUserDto: any): Promise<UserDocument> {
     if (updateUserDto.password) {
       updateUserDto.password = await bcrypt.hash(updateUserDto.password, 10);
     }
@@ -83,7 +84,7 @@ export class UsersService {
     return bcrypt.compare(plainPassword, hashedPassword);
   }
 
-  async changeStatus(id: string, status: UserStatus): Promise<User> {
+  async changeStatus(id: string, status: UserStatus): Promise<UserDocument> {
     const user = await this.userModel.findByIdAndUpdate(id, { status }, { new: true }).select('-password').exec();
     if (!user) {
       throw new NotFoundException('User not found');
@@ -91,11 +92,20 @@ export class UsersService {
     return user;
   }
 
-  async changeRole(id: string, role: UserRole): Promise<User> {
+  async changeRole(id: string, role: UserRole): Promise<UserDocument> {
     const user = await this.userModel.findByIdAndUpdate(id, { role }, { new: true }).select('-password').exec();
     if (!user) {
       throw new NotFoundException('User not found');
     }
     return user;
+  }
+
+  async getTopAuthors(): Promise<UserDocument[]> {
+    return this.userModel
+      .find({ status: UserStatus.ACTIVE })
+      .sort({ articlesCount: -1 })
+      .limit(10)
+      .select('-password -refreshToken')
+      .exec();
   }
 }

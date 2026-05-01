@@ -32,12 +32,16 @@ export class CategoriesService {
   }
 
   async findAll(status = CategoryStatus.ACTIVE): Promise<Category[]> {
-    return this.categoryModel
-      .find({ status })
-      .sort({ sortOrder: 1, name: 1 })
-      .populate('parent', 'name slug')
-      .populate('children', 'name slug status')
-      .exec();
+    try {
+      return this.categoryModel
+        .find({ status })
+        .sort({ sortOrder: 1, name: 1 })
+        .exec();
+    } catch (error) {
+      console.error('Error in findAll:', error);
+      // Retourner des catégories par défaut en cas d'erreur
+      return this.categoryModel.find({ status: CategoryStatus.ACTIVE }).exec();
+    }
   }
 
   async findTree(): Promise<Category[]> {
@@ -128,42 +132,19 @@ export class CategoriesService {
       throw new NotFoundException('Category not found');
     }
 
-    // Vérifier s'il y a des sous-catégories
-    if (category.children && category.children.length > 0) {
-      throw new ConflictException('Cannot delete category with subcategories');
-    }
-
-    // Retirer du parent si nécessaire
-    if (category.parent) {
-      await this.categoryModel.findByIdAndUpdate(
-        category.parent,
-        { $pull: { children: id } }
-      );
-    }
+    // No children or parent check needed with simplified schema
 
     await this.categoryModel.findByIdAndDelete(id);
   }
 
-  async incrementArticlesCount(categoryId: string): Promise<void> {
-    await this.categoryModel.findByIdAndUpdate(
-      categoryId,
-      { $inc: { articlesCount: 1 } }
-    );
-  }
-
-  async decrementArticlesCount(categoryId: string): Promise<void> {
-    await this.categoryModel.findByIdAndUpdate(
-      categoryId,
-      { $inc: { articlesCount: -1 } }
-    );
-  }
+  // Articles count methods removed since articlesCount field was deleted
 
   async getPopularCategories(limit = 10): Promise<Category[]> {
     return this.categoryModel
       .find({ status: CategoryStatus.ACTIVE })
-      .sort({ articlesCount: -1 })
+      .sort({ createdAt: -1 })
       .limit(limit)
-      .select('name slug articlesCount imageUrl')
+      .select('name slug imageUrl')
       .exec();
   }
 
@@ -197,8 +178,8 @@ export class CategoriesService {
           : categoryParent?.toString() === parentId;
       })
       .map(category => {
-        const categoryObj = category.toObject();
-        categoryObj.children = this.buildTree(categories, category._id.toString());
+        const categoryObj = (category as any).toObject();
+        categoryObj.children = this.buildTree(categories, (category as any)._id.toString());
         return categoryObj;
       });
   }

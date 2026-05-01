@@ -1,162 +1,187 @@
-<!-- HERO SECTION -->
-<section class="hero-section">
-  <div class="hero-content">
-    <div class="hero-badge">✦ CMS Culinaire Collaboratif</div>
-    <h1 class="hero-title">
-      Écrivez, partagez, élevez <span class="highlight">l'art culinaire</span>
-    </h1>
-    <p class="hero-subtitle">
-      Rejoignez une communauté passionnée de chefs amateurs et professionnels pour partager vos meilleures créations culinaires
-    </p>
-    <div class="hero-buttons">
-      <a routerLink="/auth/register" class="btn btn-primary">Publier une recette</a>
-      <a routerLink="/articles" class="btn btn-secondary">Explorer le blog</a>
+<div class="home-container">
+  <!-- SKELETON LOADER -->
+  <div class="skeleton-loader" *ngIf="isLoading">
+    <div class="skeleton-hero">
+      <div class="skeleton-title"></div>
+      <div class="skeleton-subtitle"></div>
+      <div class="skeleton-buttons"></div>
     </div>
-  </div>
-  
-  <!-- STATS BAR -->
-  <div class="stats-bar">
-    <div class="stat-item">
-      <div class="stat-number">{{ stats.publishedArticles || 0 }}</div>
-      <div class="stat-label">Articles publiés</div>
+    <div class="skeleton-stats">
+      <div class="skeleton-stat" *ngFor="let i of [1,2,3,4]"></div>
     </div>
-    <div class="stat-item">
-      <div class="stat-number">{{ stats.activeAuthors || 0 }}</div>
-      <div class="stat-label">Auteurs actifs</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-number">{{ stats.monthlyReaders || 0 }}</div>
-      <div class="stat-label">Lecteurs/mois</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-number">{{ stats.qualityRate || 0 }}%</div>
-      <div class="stat-label">Taux de qualité</div>
-    </div>
-  </div>
-</section>
-
-<!-- ACTIVITÉ EN TEMPS RÉEL -->
-<section class="activity-section">
-  <div class="container">
-    <div class="activity-card">
-      <div class="activity-header">
-        <div class="activity-indicator">
-          <div class="pulse-dot"></div>
-        </div>
-        <h2>Activité en temps réel</h2>
+    <div class="skeleton-activity">
+      <div class="skeleton-activity-header"></div>
+      <div class="skeleton-activity-items">
+        <div class="skeleton-activity-item" *ngFor="let i of [1,2,3]"></div>
       </div>
-      <div class="activity-list" *ngIf="recentActivity.length > 0; else emptyActivity">
-        <div class="activity-item" *ngFor="let activity of recentActivity; trackBy: trackByActivityId">
-          <div class="activity-icon" [ngClass]="getActivityIconClass(activity.type)">
-            {{ getActivityEmoji(activity.type) }}
-          </div>
-          <div class="activity-content">
-            <p class="activity-text">
-              <strong>{{ activity.user.firstName }} {{ activity.user.lastName }}</strong>
-              {{ getActivityText(activity.type) }}
-              <strong>{{ activity.article.title }}</strong>
-            </p>
-            <span class="activity-time">{{ formatTime(activity.timestamp) }}</span>
-          </div>
-          <div class="activity-badge" [ngClass]="getActivityBadgeClass(activity.type)">
-            {{ activity.badge }}
-          </div>
+    </div>
+    <div class="skeleton-featured">
+      <div class="skeleton-featured-header"></div>
+      <div class="skeleton-featured-grid">
+        <div class="skeleton-featured-card skeleton-large"></div>
+        <div class="skeleton-featured-small">
+          <div class="skeleton-featured-card" *ngFor="let i of [1,2]"></div>
         </div>
       </div>
-      <ng-template #emptyActivity>
-        <div class="empty-activity">
-          <p>Aucune activité récente</p>
-        </div>
-      </ng-template>
     </div>
   </div>
-</section>
 
-<!-- ARTICLES À LA UNE -->
-<section class="featured-section">
-  <div class="container">
-    <div class="section-header">
-      <h2>Articles à la une</h2>
-      <a routerLink="/articles" class="view-all-link">Voir tout →</a>
-    </div>
-    <div class="featured-grid" *ngIf="featuredArticles.length > 0; else emptyFeatured">
-      <!-- GRANDE CARD À GAUCHE -->
-      <div class="featured-card featured-card-large" *ngIf="featuredArticles[0]" [routerLink]="['/articles', featuredArticles[0]._id]">
-        <div class="featured-image" [ngClass]="getCategoryColorClass(featuredArticles[0].categories[0]?.name)">
-          {{ getArticleEmoji(featuredArticles[0]) }}
-        </div>
-        <div class="featured-content">
-          <div class="featured-category">{{ featuredArticles[0].categories[0]?.name || 'Non classé' }}</div>
-          <h3 class="featured-title">{{ featuredArticles[0].title }}</h3>
-          <div class="featured-meta">
-            <span class="featured-author">{{ featuredArticles[0].author.firstName }} {{ featuredArticles[0].author.lastName }}</span>
-            <div class="featured-rating">
-              <span class="stars">⭐ {{ getRating(featuredArticles[0]) }}</span>
-              <span class="duration">⏱️ {{ featuredArticles[0].readTimeMinutes }}min</span>
-            </div>
-          </div>
+  <!-- CONTENT -->
+  <div class="home-content" *ngIf="!isLoading">
+    <!-- HERO SECTION -->
+    <section class="hero-section">
+      <div class="hero-content">
+        <div class="hero-badge">✦ CMS Culinaire Collaboratif</div>
+        <h1 class="hero-title">
+          Écrivez, partagez, élevez <span class="highlight">l'art culinaire</span>
+        </h1>
+        <p class="hero-subtitle">
+          Rejoignez une communauté passionnée de chefs amateurs et professionnels pour partager vos meilleures créations culinaires
+        </p>
+        <div class="hero-buttons">
+          <a routerLink="/register" class="btn btn-primary">Publier une recette</a>
+          <a routerLink="/articles" class="btn btn-secondary">Explorer le blog</a>
         </div>
       </div>
       
-      <!-- PETITES CARDS À DROITE -->
-      <div class="featured-small-cards">
-        <div class="featured-card featured-card-small" 
-             *ngFor="let article of featuredArticles.slice(1, 3); trackBy: trackByArticleId"
-             [routerLink]="['/articles', article._id]">
-          <div class="featured-image" [ngClass]="getCategoryColorClass(article.categories[0]?.name)">
-            {{ getArticleEmoji(article) }}
+      <!-- STATS BAR -->
+      <div class="stats-bar">
+        <div class="stat-item">
+          <div class="stat-number">{{ stats.published || 0 }}</div>
+          <div class="stat-label">Articles publiés</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">{{ stats.pending || 0 }}</div>
+          <div class="stat-label">En attente</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">{{ stats.total || 0 }}</div>
+          <div class="stat-label">Total</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-number">{{ categories.length || 0 }}</div>
+          <div class="stat-label">Catégories</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ACTIVITÉ EN TEMPS RÉEL -->
+    <section class="activity-section" *ngIf="recentActivity.length > 0">
+      <div class="container">
+        <div class="activity-card">
+          <div class="activity-header">
+            <div class="activity-indicator">
+              <div class="pulse-dot"></div>
+            </div>
+            <h2>Activité en temps réel</h2>
           </div>
-          <div class="featured-content">
-            <div class="featured-category">{{ article.categories[0]?.name || 'Non classé' }}</div>
-            <h4 class="featured-title">{{ article.title }}</h4>
-            <div class="featured-meta">
-              <span class="featured-author">{{ article.author.firstName }} {{ article.author.lastName }}</span>
-              <span class="stars">⭐ {{ getRating(article) }}</span>
+          <div class="activity-list">
+            <div class="activity-item" *ngFor="let activity of recentActivity; trackBy: trackByActivityId">
+              <div class="activity-icon" [ngClass]="getActivityIconClass(activity.type)">
+                {{ getActivityEmoji(activity.type) }}
+              </div>
+              <div class="activity-content">
+                <p class="activity-text">
+                  <strong>{{ activity.user.firstName || 'Utilisateur' }} {{ activity.user.lastName || '' }}</strong>
+                  {{ getActivityText(activity.type) }}
+                  <strong>{{ activity.article.title || 'un article' }}</strong>
+                </p>
+                <span class="activity-time">{{ formatTime(activity.timestamp) }}</span>
+              </div>
+              <div class="activity-badge" [ngClass]="getActivityBadgeClass(activity.type)">
+                {{ activity.badge || activity.type }}
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-    <ng-template #emptyFeatured>
-      <div class="empty-featured">
-        <div class="empty-icon">🍽️</div>
-        <p>Aucun article à la une pour le moment</p>
+    </section>
+
+    <!-- ARTICLES À LA UNE -->
+    <section class="featured-section" *ngIf="featuredArticles.length > 0">
+      <div class="container">
+        <div class="section-header">
+          <h2>Articles à la une</h2>
+          <a routerLink="/articles" class="view-all-link">Voir tout →</a>
+        </div>
+        <div class="featured-grid">
+          <!-- GRANDE CARD À GAUCHE -->
+          <div class="featured-card featured-card-large" 
+               *ngIf="featuredArticles[0]" 
+               [routerLink]="['/articles', featuredArticles[0]._id]"
+               (click)="onArticleClick(featuredArticles[0])">
+            <div class="featured-image">
+              🍽️
+            </div>
+            <div class="featured-content">
+              <div class="featured-category">
+                {{ getCategoryName(featuredArticles[0].categories[0]) }}
+              </div>
+              <h3 class="featured-title">{{ featuredArticles[0].title }}</h3>
+              <div class="featured-meta">
+                <span class="featured-author">
+                  {{ featuredArticles[0].author.firstName || 'Anonyme' }} {{ featuredArticles[0].author.lastName || '' }}
+                </span>
+                <div class="featured-rating">
+                  <span class="stars">⭐ 4.5</span>
+                  <span class="duration">⏱️ {{ featuredArticles[0].readTimeMinutes || 15 }}min</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- PETITES CARDS À DROITE -->
+          <div class="featured-small-cards">
+            <div class="featured-card featured-card-small" 
+                 *ngFor="let article of featuredArticles.slice(1, 3); trackBy: trackByArticleId"
+                 [routerLink]="['/articles', article._id]"
+                 (click)="onArticleClick(article)">
+              <div class="featured-image">
+                🍽️
+              </div>
+              <div class="featured-content">
+                <div class="featured-category">
+                  {{ getCategoryName(article.categories[0]) }}
+                </div>
+                <h4 class="featured-title">{{ article.title }}</h4>
+                <div class="featured-meta">
+                  <span class="featured-author">
+                    {{ article.author.firstName || 'Anonyme' }} {{ article.author.lastName || '' }}
+                  </span>
+                  <span class="stars">⭐ 4.5</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </ng-template>
-  </div>
-</section>
+    </section>
 
-<!-- CATÉGORIES -->
-<section class="categories-section">
-  <div class="container">
-    <h2 class="section-title">Explorer par catégories</h2>
-    <div class="categories-grid">
-      <a class="category-card" 
-         routerLink="/articles" 
-         [queryParams]="{category: 'entrées'}"
-         *ngFor="let category of categories; trackBy: trackByCategoryId">
-        <div class="category-icon">{{ category.icon }}</div>
-        <h3>{{ category.name }}</h3>
-        <p class="category-count">{{ category.count }} articles</p>
-      </a>
-    </div>
-  </div>
-</section>
+    <!-- CATÉGORIES -->
+    <section class="categories-section" *ngIf="categories.length > 0">
+      <div class="container">
+        <h2 class="section-title">Explorer par catégories</h2>
+        <div class="categories-grid">
+          <a class="category-card" 
+             (click)="onCategoryClick(category)"
+             *ngFor="let category of categories.slice(0, 6); trackBy: trackByCategoryId">
+            <div class="category-icon">🍽️</div>
+            <h3>{{ getCategoryName(category) }}</h3>
+            <p class="category-count">{{ category.articlesCount || 0 }} articles</p>
+          </a>
+        </div>
+      </div>
+    </section>
 
-<!-- CTA REJOINDRE -->
-<section class="cta-section">
-  <div class="container">
-    <div class="cta-content">
-      <h2>Devenez auteur sur la plateforme</h2>
-      <p>Partagez votre passion pour la cuisine avec des milliers de lecteurs passionnés</p>
-      <a routerLink="/auth/register" class="btn btn-primary btn-large">Commencer maintenant</a>
-    </div>
+    <!-- CTA REJOINDRE -->
+    <section class="cta-section">
+      <div class="container">
+        <div class="cta-content">
+          <h2>Devenez auteur sur la plateforme</h2>
+          <p>Partagez votre passion pour la cuisine avec des milliers de lecteurs passionnés</p>
+          <a routerLink="/register" class="btn btn-primary btn-large">Commencer maintenant</a>
+        </div>
+      </div>
+    </section>
   </div>
-</section>
-
-<!-- LOADING SKELETONS -->
-<div class="skeleton-container" *ngIf="loading">
-  <div class="skeleton-hero"></div>
-  <div class="skeleton-activity"></div>
-  <div class="skeleton-featured"></div>
 </div>
